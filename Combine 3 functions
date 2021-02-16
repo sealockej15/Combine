@@ -1,0 +1,257 @@
+# y+=145 because top = 25 box = 100 and bottom = 20
+
+"""
+functions
+
+Description:
+"""
+import random, pygame
+
+def set_window_size(activated_sections, window_dimensions):
+    if activated_sections[0] == True:
+        window_dimensions[0] = 510
+        window_dimensions[1] = 435
+    if activated_sections[1] == True:
+        window_dimensions[0] = 1030
+    if activated_sections[2] == True:
+        window_dimensions[0] = 1550
+    
+def init_window(window_dimensions):
+    window=pygame.display.set_mode(window_dimensions)
+    window.fill((255,255,255))
+    return window
+    
+################### general functions ##################
+
+# draw a block
+def draw_block(x, y, color, window):
+    block=pygame.Rect(x, y, 80, 80)
+    pygame.draw.rect(window, color, block)
+
+# draw a rectangle
+def draw_rectangle(x, y, color, length, height, window):
+    rectangle=pygame.Rect(x, y, length, height)
+    pygame.draw.rect(window, color, rectangle)
+
+# draw a triangle
+def draw_dust(x, y, color, window):
+    pygame.draw.polygon(window, color, ((x,y +80), (x +80, y+80), (x +40, y)))
+
+# draws the boxes around the blocks
+
+def draw_section_boxes(x, y, columns, rows, window):
+    x-=10
+    y-=10
+    row = 0
+    while row < rows:
+        column = 0
+        while column < columns:
+            box=pygame.Rect(x, y, 100, 100)
+            pygame.draw.rect(window, (0,0,0), box, 3)
+            x+=130
+            column+=1
+        row+=1
+        x-=130 *columns
+        y+=145
+        
+# draws the outline
+
+def draw_row_seperaters(x, y, columns, rows, window):
+    x-=25
+    y-=35
+    row=1
+    while row <= rows:
+        pygame.draw.line(window, (0,0,0), (x, y +(row *145)), (x +(columns *130), y +(row *145)), 3)
+        row+=1
+
+# displays the block names
+def display_names(x, y, columns, rows, titles, offset, bold, window):
+    x-=10
+    y-=30
+    row = 0
+    while row < rows:
+        column = 0
+        while column < columns:
+            bold.render_to(window, (x +offset[column +(row*4)], y), titles[column +(row *4)])
+            x+=130
+            column+=1
+        row+=1
+        x-=130 *columns
+        y+=145
+
+# display the item name and how many you have
+def names_and_amount(x, y, columns, rows, names, amounts, font, window):
+    x-=10
+    y+=92
+    row = 0
+    while row < rows:
+        column = 0
+        while column < columns:
+            font.render_to(window, (x, y), names[column +(row *4)] +": " +str(amounts[row][column]))
+            x+=130
+            column+=1
+        row+=1
+        x-=130 *columns
+        y+=145
+
+
+
+####################   section 1 (crafting)   #########################
+
+
+
+# draws all blocks in section 1
+def draw_section_1_blocks(x, y, window):
+    functions=[draw_grass, draw_mushroom, draw_podzol, draw_dirt, draw_mycelium, draw_coarse_dirt, draw_gravel, draw_flint, draw_chest, draw_wood_planks, draw_crafting_table, draw_stick]
+    row = 0
+    while row < 3:
+        column = 0
+        while column < 4:
+            functions[column +(row *4)](x, y, window)
+            column+=1
+            x+=130
+        row+=1
+        x-=130 *4
+        y+=145
+
+# dirt
+def draw_dirt(x, y, window):
+    dirt=pygame.Rect(x, y, 80, 80)
+    pygame.draw.rect(window, (104, 83, 59), dirt)
+
+# all of the blocks
+def get_grass_coordinates():
+    coordinates=[]
+    while len(coordinates) != 8:
+        coordinates.append(random.randint(0, 30))
+    return coordinates
+
+def draw_grass(x, y, window):
+    grass_coordinates=[15, 22, 12, 19, 3, 16, 10, 28]
+    pygame.draw.line(window, (67, 132, 29), (x, y +80), (x +80, y +80), 5)
+    counter = 0
+    while counter < 8:
+        pygame.draw.line(window, (67, 132, 29), (x +5 +(counter *10),y +80), (x +5 +(counter *10),y +grass_coordinates[counter]),5)
+        counter+=1
+
+def draw_mushroom(x, y, window):
+    draw_block(x, y , (193, 165, 133), window)
+
+def draw_podzol(x, y, window):
+    draw_dirt(x, y, window)
+    draw_rectangle(x, y, (94, 53, 7), 80, 20, window)
+
+def draw_mycelium(x, y, window):
+    draw_dirt(x, y, window)
+    draw_rectangle(x, y, (120, 113, 130), 80, 20, window)
+
+def draw_coarse_dirt(x, y, window):
+    draw_block(x, y, (79, 57, 3), window)
+
+def draw_gravel(x, y, window):
+    draw_block(x, y, (125,128,132), window)
+
+def draw_flint(x, y, window):
+    pygame.draw.polygon(window, (0,0,0), ((x, y), (x, y +80), (x +80, y +80)))
+
+def draw_chest(x, y, window):
+    draw_block(x, y, (107, 83, 22), window)
+    draw_rectangle(x, y +25, (0,0,0), 80, 10, window)
+    draw_rectangle(x +27, y +15, (0,0,0), 25, 30, window)
+    draw_rectangle(x +30, y +18, (237,237,237), 19, 24, window)
+
+def draw_wood_planks(x, y, window):
+    draw_block(x, y, (160, 140, 80), window)
+    counter = 0
+    while counter < 4:
+        pygame.draw.line(window, (0,0,0), (x, y +10 + counter *20), (x +80, y +10 + counter *20), 3)
+        counter+=1
+
+def draw_crafting_table(x, y, window):
+    draw_block(x, y, (73, 54, 2), window)
+    pygame.draw.line(window, (0,0,0), (x, y +int(80/3)),(x +80, y +int(80/3)),3)
+    pygame.draw.line(window, (0,0,0), (x, y +int(80/3 *2)),(x +80, y +int(80/3 *2)),3)
+    pygame.draw.line(window, (0,0,0), (x +int(80/3), y),(x +int(80/3), y +80),3)
+    pygame.draw.line(window, (0,0,0), (x +int(80/3 *2), y),(x +int(80/3 *2), y +80),3)    
+
+def draw_stick(x, y, window):
+    draw_rectangle(x+30, y, (56, 44, 13), 20, 80, window)
+
+
+
+#################   section 2 (iron)   #####################
+
+
+def draw_section_2_blocks(x, y, window):
+    functions=[draw_coal, draw_cobblestone, draw_furnace, draw_sand, draw_glass, draw_bottle, draw_iron_ore, draw_iron_ingot]
+    row = 0
+    while row < 2:
+        column = 0
+        while column < 4:
+            functions[column +(row *4)](x, y, window)
+            column+=1
+            x+=130
+        row+=1
+        x-=130 *4
+        y+=145
+
+# draws all blocks in section 2
+def draw_coal(x, y, window):
+    draw_dust(x, y, (0, 0, 0), window)
+
+def draw_cobblestone(x, y, window):
+    draw_block(x, y, (94, 97, 99), window)
+
+def draw_furnace(x, y, window):
+    draw_block(x, y, (68, 68, 68), window)
+    draw_rectangle(x +17, y +40, (255, 110, 0), 45, 25, window)
+
+def draw_sand(x, y, window):
+    draw_block(x, y, (255, 255, 0), window)
+
+def draw_glass(x, y, window):
+    draw_block(x, y, (215, 227, 247), window)
+    draw_rectangle(x+2, y+2, (239, 243, 249), 76, 76, window)
+
+def draw_bottle(x, y, window):
+    pygame.draw.polygon(window, (215, 227, 247), ((x +20,y),(x +60,y),(x +60,y +30),(x +70,y +30),(x +70,y +80),(x +10,y +80),(x +10,y +30),(x +20,y +30)), 5)
+    draw_rectangle(x +22, y +2, (170, 145, 107), 36, 31, window)   
+    
+def draw_iron_ore(x, y, window):
+    iron_coordinates=[(5, 28), (10, 14), (15, 56), (25, 39), (35, 5), (35, 28), (40, 65), (45, 53), (55, 34), (65, 12), (65, 64)]
+    draw_block(x, y, (94, 97, 99), window)
+    while len(iron_coordinates) > 0:
+        draw_rectangle(x +iron_coordinates[len(iron_coordinates)-1][0], y +iron_coordinates[len(iron_coordinates)-1][1], (225,210,150), 10, 10, window)
+        del iron_coordinates[len(iron_coordinates)-1]
+
+def draw_iron_ingot(x, y, window):
+    draw_rectangle(x, y +25, (211,211,211), 80, 30, window)
+
+
+
+
+
+
+
+
+
+######################    draw section 4 (tools)    ########################
+
+
+
+def draw_pickaxe(x, y, color, window):
+    pygame.draw.polygon(window, (56, 44, 13), ((x +12,y +80), (x +60, y +30), (x +50, y +20), (x +10, y +65)))
+    pygame.draw.polygon(window, color, ((x+50, y+20), (x +65, y +35), (x +65, y +50), (x +70, y +50), (x +75, y +30), (x +50, y+5), (x +30, y +10), (x +30, y +15), (x +45, y +15)))
+    
+def draw_wood_pickaxe(x, y, window):
+    draw_pickaxe(x, y, (65,50,0), window)
+
+
+
+
+
+
+
+
+
+
