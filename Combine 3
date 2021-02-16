@@ -1,0 +1,98 @@
+# started February 12th  (Ski break project)
+"""
+Combine_3
+
+Description:
+"""
+import pygame, random, functions, pygame.freetype
+pygame.init()
+
+
+# section 1 resources amounts
+section_1_row_1=[50,50,0,0]
+section_1_row_2=[0,0,0,0]
+section_1_row_3=[0,0,0,0]
+section_1_amounts=[section_1_row_1, section_1_row_2, section_1_row_3]
+# section 2 resources smounts
+section_2_row_1=[0,0,0,0]
+section_2_row_2=[0,0,0,0]
+section_2_row_3=[0,0,0,0]
+section_2_amounts=[section_2_row_1, section_2_row_2, section_2_row_3]
+
+
+game=True
+# fonts
+font = pygame.freetype.Font("Archivo-Regular.ttf", 15)
+bold=pygame.freetype.Font("Archivo-Bold.ttf", 15)
+# starting x and y coordinates
+x=25
+y=35
+# starting window dimensions
+window_dimensions=[0,0]
+# what sections should be drawn
+Crafting=True
+Iron=False
+Diamond=False
+activation=[Crafting, Iron, Diamond]
+change_window_size=True
+
+
+
+while game:
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            activation[1]=True
+            change_window_size=True
+            print("key")
+        # if the x in the top left corner is pressed, end the game
+        if event.type == pygame.QUIT:
+            game=False
+    # set the window size according to what sections are activated        
+    functions.set_window_size(activation, window_dimensions)
+    # if the size needs to be changed, change it
+    if change_window_size == True:
+        window = functions.init_window(window_dimensions)
+        print("size changed")
+        change_window_size=False
+    window.fill((255,255,255))
+    # if section 1 is activated
+    if activation[0] == True:
+        x=15
+        functions.draw_section_1_blocks(x, y, window)
+        functions.draw_section_boxes(x, y, 4, 3, window)
+        functions.draw_row_seperaters(x, y, 4, 3, window)
+        pygame.draw.line(window, (0,0,0), (x -25 +130 *4,0), (x -25 +130 *4,435), 5)
+        titles=["Grass", "Mushroom Block", "Podzol", "Dirt", "Mycelium", "Coarse Dirt", "Gravel", "Flint", "Chests", "Wood Planks", "Crafting Tables", "Sticks"]
+        x_offset_for_titles=[30, -10, 25, 35, 15, 10, 25, 35, 25, 0, -5, 25]
+        functions.display_names(x, y, 4, 3, titles, x_offset_for_titles, bold, window)
+        names=["Seeds", "Mushrooms", "Podzol", "Dirt", "Mycelium", "Coarse Dirt", "Gravel", "Flint", "Chests", "Wood Planks", "Crafting Tables", "Sticks"]
+        functions.names_and_amount(x, y, 4, 3, names, section_1_amounts, font, window)
+
+    # if section 2 is activated
+    if activation[1] == True:
+        x=535
+        functions.draw_section_2_blocks(x, y, window)
+        functions.draw_section_boxes(x, y, 4, 3, window)
+        functions.draw_row_seperaters(x, y, 4, 3, window)
+        pygame.draw.line(window, (0,0,0), (x -25 +130 *4,0), (x -25 +130 *4,435), 5)
+        titles=["Coal", "Cobblestone","Furnace", "Sand", "Glass", "Bottle", "Gravel", "Flint", "Chests", "Wood Planks", "Crafting Tables", "Sticks"]
+        x_offset_for_titles=[30, 5, 20, 30, 30, 25, 25, 35, 25, 0, -5, 25]
+        functions.display_names(x, y, 4, 3, titles, x_offset_for_titles, bold, window)
+        names=["Coals", "Cobblestones", "Furnaces", "Sand", "Glass", "Bottles", "Gravel", "Flint", "Chests", "Wood Planks", "Crafting Tables", "Sticks"]
+        functions.names_and_amount(x, y, 4, 3, names, section_2_amounts, font, window)    
+    pygame.display.flip()
+
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
