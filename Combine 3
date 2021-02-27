@@ -7,46 +7,139 @@ Description:
 import pygame, random, functions, pygame.freetype
 pygame.init()
 
-
 # section 1 resources amounts
 section_1_row_1=[50,50,0,0]
-section_1_row_2=[0,0,0,0]
-section_1_row_3=[0,0,0,0]
+section_1_row_2=[0,0,5,5]
+section_1_row_3=[0,1,1,5]
 section_1_amounts=[section_1_row_1, section_1_row_2, section_1_row_3]
-# section 2 resources smounts
-section_2_row_1=[0,0,0,0]
-section_2_row_2=[0,0,0,0]
+# section 2 resources amounts
+section_2_row_1=[0,["mineable", 8, 2],0,0]
+section_2_row_2=[0,0,["mineable", 0, 0],4]
 section_2_row_3=[0,0,0,0]
 section_2_amounts=[section_2_row_1, section_2_row_2, section_2_row_3]
-
+# section 3 resources amounts
+section_3_row_1=[0,0,0,0]
+section_3_row_2=[0,0,0,0]
+section_3_row_3=[0,0,0,0]
+section_3_amounts=[section_3_row_1, section_3_row_2, section_3_row_3]
+# section 4 resources amounts
+section_4_row_1=[["reference", 0, 2, 2], ["reference", 0, 2, 3],["refer and mine", 1, 0, 1],["reference", 1, 1, 3], ["reference", 2, 2, 1]]
+section_4_row_2=[["tool", 0, 5],["tool", 0, 10], ["tool", 0, 20], ["tool", 0, 50], ["tool", 0, 10]]
+section_4_row_3=[["tool", 0, 20],["tool", 0, 50],["tool", 0, 100],["tool", 0, 30], 0]
+section_4_amounts=[section_4_row_1, section_4_row_2, section_4_row_3]
+# section 5 resources amounts
+section_5_row_1=[0,["tool", 0, 2]]
+section_5_row_2=[["tool", 0, 5],["tool", 0, 10]]
+#section_5_row_3=[0,0,0,0]
+section_5_amounts=[section_5_row_1, section_5_row_2]
+# all section amounts so that they can be referenced to
+section_amounts=[section_1_amounts, section_2_amounts, section_3_amounts, section_4_amounts, section_5_amounts]
 
 game=True
-# fonts
-font = pygame.freetype.Font("Archivo-Regular.ttf", 15)
-bold=pygame.freetype.Font("Archivo-Bold.ttf", 15)
 # starting x and y coordinates
-x=25
-y=35
+x=0
+y=0
+turn = [0]
 # starting window dimensions
 window_dimensions=[0,0]
+# current tool
+current_tool=""
+tools=["wood pickaxe", "stone pickaxe", "iron pickaxe", "diamond pickaxe", "wood sword", "stone sword", "iron sword", "diamond sword", "bow", "stone hoe", "iron hoe", "diamond hoe"]
 # what sections should be drawn
+section_2_always_true = False
+section_3_always_true = False
+
+Inventory=False
 Crafting=True
-Iron=False
+Water=False
 Diamond=False
-activation=[Crafting, Iron, Diamond]
+Tools=False
+Farming=False
+activation=[Inventory, Crafting, Water, Diamond, Tools, Farming]
 change_window_size=True
+
+change=0
 
 
 
 while game:
     for event in pygame.event.get():
         if event.type == pygame.KEYDOWN:
-            activation[1]=True
-            change_window_size=True
+            
+            # if e is pressed go to the inventory
+            if event.key == pygame.K_e:
+                functions.reset_activation(activation)
+                activation[0]=True
+                change_window_size=True
+
+            # if space is pressed COMBINE!!!
+            elif event.key == pygame.K_SPACE:
+                x, y = pygame.mouse.get_pos()
+                current_section = functions.get_current_section(x, y, activation) -1
+                print("section " +str(current_section))
+                # you can't combine in your inventory
+                if current_section != -1:
+                    current_row = functions.get_current_row(x, y, section_amounts[current_section])
+                    print("row " +str(current_row))
+                    # is it in a box?
+                    if current_row != "":
+                        current_column = functions.get_current_column(x, y, section_amounts[current_section][0], current_section)
+                        print("column " +str(current_column))
+                        # is it in a box?
+                        if current_column != "":
+                            functions.change_amounts(current_section, current_row, current_column, section_amounts, turn)                
+                
+            elif event.key == pygame.K_a:
+                print(turn)
+                section_2_row_3[3] +=1
+                change+=1
+                current_tool = tools[change]
+            
+            elif event.key == pygame.K_RETURN:
+                x, y = pygame.mouse.get_pos()
+                # if you're in the inventory
+                if activation[0] == True:
+                    inventory_sections=[4, 5, 6, 7, 1, 0, 0]
+                    
+                    section_to_activate = functions.find_inventory_box(x, y, 2, 3)
+                    functions.change_sections(inventory_sections, section_to_activate, activation)
+                    change_window_size=True
+
+            # if any other key is pressed
+            else:
+                functions.reset_activation(activation)
+                activation[1]=True
+                change_window_size=True
             print("key")
+        
         # if the x in the top left corner is pressed, end the game
         if event.type == pygame.QUIT:
             game=False
+    
+    #########################   time   ########################
+    #cauldron stuff
+    
+    #################### section requirements ###################
+    
+    # if you have a crafting table
+    if section_1_row_3[2] == True:
+        section_2_always_true = True
+    # if section 2 is always true and you are in section 1
+    if section_2_always_true == True and activation[1] == True and activation[2] == False:
+        # activate section 2
+        activation[2] = True
+        change_window_size = True
+    # if you have infinite water
+    if section_2_row_3[3] == True:
+        section_3_always_true = True
+    # if section 3 is always true and you are in section 1
+    if section_3_always_true == True and activation[1] == True and activation[3] == False:
+        # activate section 3
+        activation[3] = True
+        change_window_size = True
+    
+    ######################## draw window ######################
+    
     # set the window size according to what sections are activated        
     functions.set_window_size(activation, window_dimensions)
     # if the size needs to be changed, change it
@@ -54,45 +147,90 @@ while game:
         window = functions.init_window(window_dimensions)
         print("size changed")
         change_window_size=False
+
+    # redraw window with white
     window.fill((255,255,255))
-    # if section 1 is activated
+    
+    
+    ########## draw out the sections if they're activated ########
+    
+    # if section 0 (Inventory) is activated
     if activation[0] == True:
-        x=15
-        functions.draw_section_1_blocks(x, y, window)
-        functions.draw_section_boxes(x, y, 4, 3, window)
-        functions.draw_row_seperaters(x, y, 4, 3, window)
-        pygame.draw.line(window, (0,0,0), (x -25 +130 *4,0), (x -25 +130 *4,435), 5)
+        x=25
+        y=35
+        functions.draw_section_boxes(x, y, 3, 2, 0, section_amounts, window)
+        functions.draw_row_seperaters(x, y, 3, 2, window)
+        titles=["Tools", "Farming", "Armor", "Spawners", "Main Area", ""]
+        x_offset_for_titles=[30, 20, 30, 15, 15, 0]
+        bold = pygame.freetype.Font("Archivo-Bold.ttf", 15)
+        functions.display_names(x, y, 3, 2, titles, x_offset_for_titles, bold, window)
+        draw_functions_0=[functions.draw_diamond_pickaxe_icon, functions.draw_diamond_hoe_icon, functions.draw_diamond_armor, functions.draw_spawner, functions.draw_crafting_table, functions.draw_blank]
+        functions.draw_section_blocks(x, y, 3, 2, draw_functions_0, current_tool, tools, window)
+    
+    # if section 1 (Crafting) is activated
+    if activation[1] == True:
+        x=25
+        y=35
+        # all the items that'll be drawn
+        draw_functions_1=[functions.draw_grass, functions.draw_mushroom, functions.draw_podzol, functions.draw_dirt, functions.draw_mycelium, functions.draw_coarse_dirt, functions.draw_gravel, functions.draw_flint, functions.draw_chest, functions.draw_wood_planks, functions.draw_crafting_table, functions.draw_stick]
+        # the names of the items
         titles=["Grass", "Mushroom Block", "Podzol", "Dirt", "Mycelium", "Coarse Dirt", "Gravel", "Flint", "Chests", "Wood Planks", "Crafting Tables", "Sticks"]
         x_offset_for_titles=[30, -10, 25, 35, 15, 10, 25, 35, 25, 0, -5, 25]
-        functions.display_names(x, y, 4, 3, titles, x_offset_for_titles, bold, window)
         names=["Seeds", "Mushrooms", "Podzol", "Dirt", "Mycelium", "Coarse Dirt", "Gravel", "Flint", "Chests", "Wood Planks", "Crafting Tables", "Sticks"]
-        functions.names_and_amount(x, y, 4, 3, names, section_1_amounts, font, window)
-
-    # if section 2 is activated
-    if activation[1] == True:
-        x=535
-        functions.draw_section_2_blocks(x, y, window)
-        functions.draw_section_boxes(x, y, 4, 3, window)
-        functions.draw_row_seperaters(x, y, 4, 3, window)
-        pygame.draw.line(window, (0,0,0), (x -25 +130 *4,0), (x -25 +130 *4,435), 5)
-        titles=["Coal", "Cobblestone","Furnace", "Sand", "Glass", "Bottle", "Gravel", "Flint", "Chests", "Wood Planks", "Crafting Tables", "Sticks"]
-        x_offset_for_titles=[30, 5, 20, 30, 30, 25, 25, 35, 25, 0, -5, 25]
-        functions.display_names(x, y, 4, 3, titles, x_offset_for_titles, bold, window)
-        names=["Coals", "Cobblestones", "Furnaces", "Sand", "Glass", "Bottles", "Gravel", "Flint", "Chests", "Wood Planks", "Crafting Tables", "Sticks"]
-        functions.names_and_amount(x, y, 4, 3, names, section_2_amounts, font, window)    
+        functions.draw_section(x, y, 0, section_amounts, 4, 3, draw_functions_1, titles, x_offset_for_titles, names, current_tool, tools, window)
+    
+    # if section 2 (Water) is activated
+    if activation[2] == True:
+        x=545
+        y=35
+        # all the items that'll be drawn
+        draw_functions_2=[functions.draw_coal, functions.draw_cobblestone, functions.draw_furnace, functions.draw_sand, functions.draw_glass, functions.draw_bottle, functions.draw_iron_ore, functions.draw_iron_ingot, functions.draw_cauldron, functions.draw_bucket, functions.draw_water_bucket, functions.draw_infinite_water]
+        # the names of the items
+        titles=["Coal", "Cobblestone","Furnace", "Sand", "Glass", "Bottle", "Iron Ore", "Iron Ingot", "Cauldron", "Bucket", "Water Bucket", "Infinite Water"]
+        x_offset_for_titles=[30, 5, 20, 30, 30, 25, 20, 15, 20, 25, 0, 0]
+        names=["Coals", "Cobblestones", "Furnaces", "Sand", "Glass", "Bottles", "Iron Ores", "Iron Ingots", "Cauldrons", "Buckets", "Water Buckets", "INFINITE"]
+        # draws the section
+        functions.draw_section(x, y, 1, section_amounts, 4, 3, draw_functions_2, titles, x_offset_for_titles, names, current_tool, tools, window)
+    
+    # if section 3 (Diamond) is activated
+    if activation[3] == True:
+        x=1065
+        y=35
+        # all the items that'll be drawn
+        draw_functions_3=[functions.draw_chicken_egg, functions.draw_witch_egg, functions.draw_glowstone, functions.draw_lapis, functions.draw_bone, functions.draw_bone_meal, functions.draw_dye, functions.draw_leaves, functions.draw_apple, functions.draw_diamond, functions.draw_badge, functions.draw_diamond_badge]
+        # the names of the items
+        titles=["Egg", "Witch Egg", "Glowstone", "Lapis Lazuli", "Bone", "Bone Meal", "Light Blue Dye", "Leaves", "Apple", "DIAMOND!!!", "Badge", "Diamond Badge"]
+        x_offset_for_titles=[35, 10, 10, 5, 30, 10, 0, 25, 30, 10, 25, -10]
+        names=["Eggs", "Witch Eggs", "Glowstone", "Lapis", "Bones", "Bone Meal", "Dyes", "Leaves", "Apples", "DIAMONDS!", "Badges", "Badge 1"]
+        # draws the section
+        functions.draw_section(x, y, 2, section_amounts, 4, 3, draw_functions_3, titles, x_offset_for_titles, names, current_tool, tools, window)
+    
+    # if section 4 (Tools) is activated
+    if activation[4] == True:
+        x=25
+        y=35
+        # all the items that'll be drawn
+        draw_functions_4=[functions.draw_wood_planks, functions.draw_stick, functions.draw_cobblestone, functions.draw_iron_ingot, functions.draw_diamond, (functions.draw_wood_pickaxe, "tool", 0), (functions.draw_stone_pickaxe, "tool", 1), (functions.draw_iron_pickaxe, "tool", 2), (functions.draw_diamond_pickaxe, "tool", 3), (functions.draw_wood_sword, "tool", 4), (functions.draw_stone_sword, "tool", 5), (functions.draw_iron_sword, "tool", 6), (functions.draw_diamond_sword, "tool", 7), (functions.draw_bow, "tool", 8), functions.draw_arrow]
+        # the names of the items
+        titles=["Wood Plank", "Stick", "Cobblestone", "Iron Ingot", "DIAMOND!!!", "Wood Pickaxe", "Stone Pickaxe", "Iron Pickaxe", "Diamond Pickaxe", "Wood Sword", "Stone Sword", "Iron Sword", "Diamond Sword", "Bow", "Arrow"]
+        x_offset_for_titles=[10, 30, 5, 15, 5, 0, 0, 5, -15, 5, 5, 10, -5, 35, 30]
+        names=["Wood Planks", "Sticks", "Cobblestones", "Iron Ingots", "DIAMONDS!", "Durability", "Durability", "Durability", "Durability", "Durability", "Durability", "Durability", "Durability", "Durability", "Arrows"]
+        # draws the section
+        functions.draw_section(x, y, 3, section_amounts, 5, 3, draw_functions_4, titles, x_offset_for_titles, names, current_tool, tools, window)
+    
+    # if section 5 (Farming) is activated
+    if activation[5] == True:
+        x=25
+        y=35
+        # all the items that'll be drawn
+        draw_functions_5=[functions.draw_farm_dirt, (functions.draw_stone_hoe, "tool", 9), (functions.draw_iron_hoe, "tool", 10), (functions.draw_diamond_hoe, "tool", 11)]
+        # the names of the items
+        titles=["Farm Dirt", "Stone Hoe", "Iron Hoe", "Diamond Hoe"]
+        x_offset_for_titles=[20, 15, 20, 0]
+        names=["Farm Dirt", "Durability", "Durability", "Durability"]
+        # draws the section
+        functions.draw_section(x, y, 4, section_amounts, 2, 2, draw_functions_5, titles, x_offset_for_titles, names, current_tool, tools, window)
+    
     pygame.display.flip()
 
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
