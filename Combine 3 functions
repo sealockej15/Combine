@@ -9,12 +9,23 @@ import random, pygame
 
 def set_window_size(activated_sections, window_dimensions):
     if activated_sections[0] == True:
-        window_dimensions[0] = 510
-        window_dimensions[1] = 435
+        window_dimensions[0] = 390
+        window_dimensions[1] = 290
     if activated_sections[1] == True:
-        window_dimensions[0] = 1030
+        window_dimensions[0] = 520
+        window_dimensions[1] = 435
     if activated_sections[2] == True:
-        window_dimensions[0] = 1550
+        window_dimensions[0] = 1040
+        window_dimensions[1] = 435
+    if activated_sections[3] == True:
+        window_dimensions[0] = 1560
+        window_dimensions[1] = 435
+    if activated_sections[4] == True:
+        window_dimensions[0] = 650
+        window_dimensions[1] = 435
+    if activated_sections[5] == True:
+        window_dimensions[0] = 260
+        window_dimensions[1] = 290
     
 def init_window(window_dimensions):
     window=pygame.display.set_mode(window_dimensions)
@@ -22,6 +33,8 @@ def init_window(window_dimensions):
     return window
     
 ################### general functions ##################
+
+####   drawing functions   ####
 
 # draw a block
 def draw_block(x, y, color, window):
@@ -37,82 +50,192 @@ def draw_rectangle(x, y, color, length, height, window):
 def draw_dust(x, y, color, window):
     pygame.draw.polygon(window, color, ((x,y +80), (x +80, y+80), (x +40, y)))
 
+# draw an ellipse
+def draw_ellipse(x, y, color, length, height, window):
+    ellipse=pygame.Rect(x, y, length, height)
+    pygame.draw.ellipse(window, color, ellipse)
+
+# draw an egg
+def draw_egg(x, y, color, window):
+    draw_ellipse(x+5, y, color, 70, 80, window)
+
+# draw a diamond shape
+def draw_gem(x, y, color, window):
+    pygame.draw.polygon(window, color, ((x +25,y +2),(x +55,y +2),(x +75,y +37),(x +75,y +62),(x +60,y +77),(x +20,y +77),(x +5,y +62),(x +5,y +37)))
+
+# draws a white square
+def draw_blank(x, y, window):
+    draw_block(x, y, (255, 255, 255), window)
+
+# draw a badge background
+def draw_badge_background(x, y, window):
+    frame=pygame.Rect(x, y, 80, 80)
+    pygame.draw.rect(window, (0,255,255), frame, 5)
+    draw_block(x, y, (255, 255, 0), window)
+    pygame.draw.polygon(window, (135, 255, 50), ((x,y +65), (x +65,y), (x +80,y), (x +80,y +15), (x +15, y +80), (x, y +80)))
+    pygame.draw.polygon(window, (135, 255, 50), ((x,y +15), (x +65,y +80), (x +80,y +80), (x +80,y +65), (x +15, y), (x, y)))
+
+# draws a white/green background
+def draw_background(x, y, using, window):
+    color=(255, 255, 255)
+    if using == True:
+        color=(20, 160, 0)
+    rim=pygame.Rect(x-3, y-3, 86, 86)
+    pygame.draw.rect(window, color, rim, 5)
+
 # draws the boxes around the blocks
 
-def draw_section_boxes(x, y, columns, rows, window):
+def draw_section_boxes(x, y, max_columns, max_rows, section_number, amounts, window):
     x-=10
     y-=10
     row = 0
-    while row < rows:
+    while row < max_rows:
         column = 0
-        while column < columns:
-            box=pygame.Rect(x, y, 100, 100)
-            pygame.draw.rect(window, (0,0,0), box, 3)
+        while column < max_columns:
+            # the amount would only be "" if the spot is supposed to be blank
+            if str(amounts[section_number][row][column]) != "":
+                box=pygame.Rect(x, y, 100, 100)
+                pygame.draw.rect(window, (0,0,0), box, 3)
             x+=130
             column+=1
         row+=1
-        x-=130 *columns
+        x-=130 *max_columns
         y+=145
         
-# draws the outline
+# draws the seperating lines
 
-def draw_row_seperaters(x, y, columns, rows, window):
+def draw_row_seperaters(x, y, max_columns, max_rows, window):
     x-=25
     y-=35
     row=1
-    while row <= rows:
-        pygame.draw.line(window, (0,0,0), (x, y +(row *145)), (x +(columns *130), y +(row *145)), 3)
+    while row <= max_rows:
+        pygame.draw.line(window, (0,0,0), (x, y +(row *145)), (x +(max_columns *130), y +(row *145)), 3)
         row+=1
 
 # displays the block names
-def display_names(x, y, columns, rows, titles, offset, bold, window):
+def display_names(x, y, max_columns, max_rows, titles, offset, bold, window):
     x-=10
     y-=30
     row = 0
-    while row < rows:
+    while row < max_rows:
         column = 0
-        while column < columns:
-            bold.render_to(window, (x +offset[column +(row*4)], y), titles[column +(row *4)])
+        while column < max_columns:
+            bold.render_to(window, (x +offset[column +(row*max_columns)], y), titles[column +(row *max_columns)])
             x+=130
             column+=1
         row+=1
-        x-=130 *columns
+        x-=130 *max_columns
         y+=145
 
 # display the item name and how many you have
-def names_and_amount(x, y, columns, rows, names, amounts, font, window):
+def names_and_amount(x, y, max_columns, max_rows, names, all_resource_amounts, section, font, window):
     x-=10
     y+=92
     row = 0
-    while row < rows:
+    while row < max_rows:
         column = 0
-        while column < columns:
-            font.render_to(window, (x, y), names[column +(row *4)] +": " +str(amounts[row][column]))
+        while column < max_columns:
+            if type(all_resource_amounts[section][row][column]) == list:
+                # if it's a tool
+                if all_resource_amounts[section][row][column][0] == "tool":
+                    font.render_to(window, (x-5, y), names[column +(row *max_columns)] +":  " +str(all_resource_amounts[section][row][column][1]) +" / " +str(all_resource_amounts[section][row][column][2]))
+                # if it's in multiple different sections
+                elif all_resource_amounts[section][row][column][0] == "reference":
+                    font.render_to(window, (x, y), names[column +(row *max_columns)] +": " +str(all_resource_amounts[all_resource_amounts[section][row][column][1]][all_resource_amounts[section][row][column][2]][all_resource_amounts[section][row][column][3]]))
+                # if the resource had to be first mined
+                elif all_resource_amounts[section][row][column][0] == "mineable":
+                    font.render_to(window, (x, y), "Mined: " +str(all_resource_amounts[section][row][column][1]) +" / " +str(all_resource_amounts[section][row][column][2]))
+                # if it's in a different section AND has to be mined
+                elif all_resource_amounts[section][row][column][0] == "refer and mine":
+                    font.render_to(window, (x, y), "Mined: " +str(all_resource_amounts[all_resource_amounts[section][row][column][1]][all_resource_amounts[section][row][column][2]][all_resource_amounts[section][row][column][3]][1]) +" / " +str(all_resource_amounts[all_resource_amounts[section][row][column][1]][all_resource_amounts[section][row][column][2]][all_resource_amounts[section][row][column][3]][2]))
+            # the amount would only be "" if the spot is supposed to be blank
+            elif str(all_resource_amounts[section][row][column]) != "":
+                font.render_to(window, (x, y), names[column +(row *max_columns)] +": " +str(all_resource_amounts[section][row][column]))
             x+=130
             column+=1
         row+=1
-        x-=130 *columns
+        x-=130 *max_columns
         y+=145
 
-
-
-####################   section 1 (crafting)   #########################
-
-
-
-# draws all blocks in section 1
-def draw_section_1_blocks(x, y, window):
-    functions=[draw_grass, draw_mushroom, draw_podzol, draw_dirt, draw_mycelium, draw_coarse_dirt, draw_gravel, draw_flint, draw_chest, draw_wood_planks, draw_crafting_table, draw_stick]
+# draws all blocks in a section 
+def draw_section_blocks(x, y, max_columns, max_rows, functions, current_tool, tools, window):
     row = 0
-    while row < 3:
+    while row < max_rows:
         column = 0
-        while column < 4:
-            functions[column +(row *4)](x, y, window)
+        while column < max_columns:
+            if type(functions[column +(row *max_columns)]) == tuple:
+                if functions[column +(row *max_columns)][1] == "tool":
+                    using = False
+                    if current_tool == tools[functions[column +(row *max_columns)][2]]:
+                        using = True
+                    functions[column +(row *max_columns)][0](x, y, using, window)
+            else:
+                functions[column +(row *max_columns)](x, y, window)
             column+=1
             x+=130
         row+=1
-        x-=130 *4
+        x-=130 *max_columns
         y+=145
+
+# draw a section
+def draw_section(x, y, section_number, all_resource_amounts, columns, rows, draw_functions, titles, x_offset_for_titles, names, current_tool, tools, window):
+    font = pygame.freetype.Font("Archivo-Regular.ttf", 15)
+    bold = pygame.freetype.Font("Archivo-Bold.ttf", 15)
+    draw_section_blocks(x, y, columns, rows, draw_functions, current_tool, tools, window)
+    draw_section_boxes(x, y, columns, rows, section_number, all_resource_amounts, window)
+    draw_row_seperaters(x, y, columns, rows, window)
+    pygame.draw.line(window, (0,0,0), (x -25 +130 *columns,0), (x -25 +130 *columns,145 *rows), 5)
+    display_names(x, y, columns, rows, titles, x_offset_for_titles, bold, window)
+    names_and_amount(x, y, columns, rows, names, all_resource_amounts, section_number, font, window)    
+
+#### technical functions ####
+def reset_activation(activation):
+    counter = 0
+    while counter < len(activation):
+        activation[counter]= False
+        counter+=1
+    
+def find_inventory_box(x, y, max_row, max_column):
+    counter_y=25
+    row=0
+    # if it's not change the section is the last section which is the inventory (0)
+    section = max_row * max_column
+    # loop until you find what box you clicked
+    while row < max_row:
+        counter_x=15
+        column = 0
+        
+        while column < max_column:
+            if x >= counter_x and x <= counter_x + 100 and y >= counter_y and y <= counter_y + 100:
+                # activate the new section
+                section = (column + (row *max_column))
+            counter_x+=130
+            column+=1
+        counter_y+=145
+        row+=1
+    return section
+
+def change_sections(inventory_sections, section_to_activate, activation):
+    reset_activation(activation)
+    activation[inventory_sections[section_to_activate]] = True
+
+    
+#######################   section 0 (inventory)   ##################
+
+
+
+def draw_diamond_hoe_icon(x, y, window):
+    using=False
+    draw_diamond_hoe(x, y, using, window)
+def draw_diamond_pickaxe_icon(x, y, window):
+    using=False
+    draw_diamond_pickaxe(x, y, using, window)
+
+
+
+########################   section 1 (crafting)   #########################
+
+
 
 # dirt
 def draw_dirt(x, y, window):
@@ -179,21 +302,9 @@ def draw_stick(x, y, window):
 
 
 
-#################   section 2 (iron)   #####################
+######################   section 2 (water)   #####################
 
 
-def draw_section_2_blocks(x, y, window):
-    functions=[draw_coal, draw_cobblestone, draw_furnace, draw_sand, draw_glass, draw_bottle, draw_iron_ore, draw_iron_ingot]
-    row = 0
-    while row < 2:
-        column = 0
-        while column < 4:
-            functions[column +(row *4)](x, y, window)
-            column+=1
-            x+=130
-        row+=1
-        x-=130 *4
-        y+=145
 
 # draws all blocks in section 2
 def draw_coal(x, y, window):
@@ -227,31 +338,433 @@ def draw_iron_ore(x, y, window):
 def draw_iron_ingot(x, y, window):
     draw_rectangle(x, y +25, (211,211,211), 80, 30, window)
 
+def draw_cauldron(x, y, window):
+    pygame.draw.polygon(window, (200,200,200), ((x,y), (x +15, y), (x +15,y +15), (x +65,y +15), (x +65,y), (x +80,y), (x +80, y +80), (x,y +80)))
+
+def draw_bucket(x, y, window):
+    pygame.draw.polygon(window, (211,211,211), ((x +10,y +5), (x +10,y +45), (x +20,y +70), (x +60,y +70), (x +70,y +45), (x +70,y +5), (x +70,y +45), (x +60,y +70), (x +20,y +70), (x +10,y +45)), 10)
+
+def draw_water_bucket(x, y, window):
+    draw_bucket(x, y, window)
+    pygame.draw.polygon(window, (40,85,255), ((x +15,y +10), (x +15,y +42), (x +23,y +65), (x +57,y +65), (x +65,y +42), (x +65,y +10)))
+
+def draw_infinite_water(x, y, window):
+    draw_rectangle(x-5, y-5, (40,85,255), 90, 90, window)
 
 
 
+###########################   section 3 (diamond)   #######################
 
 
 
+def draw_chicken_egg(x, y, window):
+    draw_egg(x, y, (216, 215, 164), window)
+
+def draw_witch_egg(x, y, window):
+    draw_egg(x, y, (100,0,100), window)
+
+def draw_glowstone(x, y, window):
+    draw_dust(x, y, (255, 255, 0), window)
+
+def draw_lapis(x, y, window):
+    draw_gem(x, y, (0,75,200), window)
+
+def draw_bone(x, y, window):
+    draw_rectangle(x +30, y, (240, 240, 240), 20, 80, window)
+
+def draw_bone_meal(x, y, window):
+    draw_ellipse(x, y, (240,240,240), 80, 80, window)
+
+def draw_dye(x, y, window):
+    draw_ellipse(x +10, y +20, (60, 160, 190), 60, 40, window)
+
+def draw_leaves(x, y, window):
+    draw_block(x, y, (28, 132, 18), window)
+
+def draw_apple(x, y, window):
+    draw_ellipse(x, y, (255, 0, 0), 80, 80, window)
+
+def draw_diamond(x, y, window):
+    draw_gem(x, y, (0,255,255), window)
+
+def draw_badge(x, y, window):
+    draw_badge_background(x, y, window)
+
+def draw_diamond_badge(x, y, window):
+    draw_badge_background(x, y, window)
+    #  smaller diamond
+    pygame.draw.polygon(window, (0,255,255), ((x +30,y +7),(x +50,y +7),(x +70,y +37),(x +70,y +57),(x +55,y +72),(x +25,y +72),(x +10,y +57),(x +10,y +37)))
+    
 
 
-######################    draw section 4 (tools)    ########################
+############################    section 4 (tools)    ########################
 
 
 
-def draw_pickaxe(x, y, color, window):
+def draw_pickaxe(x, y, color, using, window):
+    draw_background(x, y, using, window)
     pygame.draw.polygon(window, (56, 44, 13), ((x +12,y +80), (x +60, y +30), (x +50, y +20), (x +10, y +65)))
     pygame.draw.polygon(window, color, ((x+50, y+20), (x +65, y +35), (x +65, y +50), (x +70, y +50), (x +75, y +30), (x +50, y+5), (x +30, y +10), (x +30, y +15), (x +45, y +15)))
     
-def draw_wood_pickaxe(x, y, window):
-    draw_pickaxe(x, y, (65,50,0), window)
+def draw_wood_pickaxe(x, y, using, window):
+    draw_pickaxe(x, y, (65,50,0), using, window)
+
+def draw_stone_pickaxe(x, y, using, window):
+    draw_pickaxe(x, y, (94, 97, 99), using, window)
+
+def draw_iron_pickaxe(x, y, using, window):
+    draw_pickaxe(x, y, (211,211,211), using, window)
+
+def draw_diamond_pickaxe(x, y, using, window):
+    draw_pickaxe(x, y, (0, 255, 255), using, window)
 
 
 
+############################   section 5 (farming)   #################
 
 
 
+def draw_hoe(x, y, color, using, window):
+    draw_background(x, y, using, window)
+    pygame.draw.polygon(window, (54, 44, 13), ((x +12,y +80), (x +60, y +30), (x +50, y +25), (x +10, y +70)))
+    pygame.draw.polygon(window, color, ((x +60,y +30), (x +65, y +32), (x +70, y +25), (x +40, y +5), (x +30, y +5), (x +20, y +10), (x +17, y +20), (x +33, y +15)))
+
+def draw_farm_dirt(x, y, window):
+    draw_dirt(x, y, window)
+    counter = 0
+    while counter < 4:
+        counter_2 = 0
+        while counter_2 < 8:
+            pygame.draw.polygon(window, (90, 50, 10), ((x +counter_2*10, y +15 +(counter *18)), (x +5 +counter_2*10, y +12 +(counter *18)), (x +10 +counter_2*10, y +15 +(counter *18)), (x +5 +counter_2*10, y +12 +(counter *18))), 5)
+            counter_2+=1
+        counter+=1
+    white_rim=pygame.Rect(x-1, y-1, 82, 82)
+    pygame.draw.rect(window, (255, 255, 255), white_rim, 2)
+
+def draw_stone_hoe(x, y, using, window):
+    draw_hoe(x, y, (94, 97, 99), using, window)
+    
+def draw_iron_hoe(x, y, using, window):
+    draw_hoe(x, y, (211,211,211), using, window)
+
+def draw_diamond_hoe(x, y, using, window):
+    draw_hoe(x, y, (0, 255, 255), using, window)
+
+def draw_sword(x, y, color, using, window):
+    draw_background(x, y, using, window)
+    pygame.draw.polygon(window, (54, 44, 13), ((x +17,y +75), (x +30, y +55), (x +23, y +50), (x +15, y +65)))
+    pygame.draw.polygon(window, color, ((x +30, y +55), (x +37, y +60), (x +47, y +57), (x +16, y +35), (x +16, y +45)))
+    pygame.draw.polygon(window, color, ((x +35, y +50), (x +60, y +10), (x +50, y +10), (x +25, y +45)))
+    pygame.draw.line(window, (54, 44, 13), (x +37, y +50), (x +25, y +41), 3)
+
+def draw_wood_sword(x, y, using, window):
+    draw_sword(x, y, (65, 50, 0), using, window)
+
+def draw_stone_sword(x, y, using, window):
+    draw_sword(x, y, (94, 97, 99), using, window)
+    
+def draw_iron_sword(x, y, using, window):
+    draw_sword(x, y, (211,211,211), using, window)
+
+def draw_diamond_sword(x, y, using, window):
+    draw_sword(x, y, (0, 255, 255), using, window)
+
+def draw_bow(x, y, using, window):
+    Bow=pygame.Rect(x +15, y +5, 50, 70)
+    pygame.draw.ellipse(window, (54, 44, 13), Bow, 5)
+    draw_rectangle(x -25, y, (255, 255, 255), 60, 80, window)
+    pygame.draw.line(window, (100, 100, 100), (x +35, y +2), (x +35, y +78), 5)
+    draw_background(x, y, using, window)
+
+def draw_arrow(x, y, window):
+    pygame.draw.line(window, (54, 44, 13), (x +15, y +65), (x +65, y +15), 5)
+    pygame.draw.polygon(window, (105, 105, 105), ((x +45, y +20), (x +65, y +30), (x +70, y +10)))
+    pygame.draw.polygon(window, (0, 0, 0), ((x +10, y +60), (x +20, y +60), (x +20, y +70), (x +13, y +78), (x +13, y +68), (x +3, y +68)), 2)
+    pygame.draw.polygon(window, (255, 255, 255), ((x +10, y +60), (x +20, y +60), (x +20, y +70), (x +13, y +78), (x +13, y +68), (x +3, y +68)))
 
 
 
+###########################   section 6 (armor)   ######################
+
+
+
+def draw_armor(x, y, color, window):
+    pygame.draw.polygon(window, color, ((x +5,y +20),(x +15,y +5),(x +25,y +5),(x +35,y +25),(x +45,y +25),(x +55,y +5),(x +65,y +5),(x +75,y +20),(x +75,y +30),(x +65,y +50),(x +60,y +70),(x +50,y +75),(x +30,y +75),(x +20,y +70),(x +15,y +50),(x +5,y +30)))
+
+def draw_diamond_armor(x, y, window):
+    draw_armor(x, y, (0, 255, 255), window)
+
+
+
+##########################   section 7 (spawners)
+
+
+
+def draw_spawner(x, y, window):
+    pygame.draw.polygon(window, (50, 50, 50), ((x, y), (x +80, y), (x +80, y +80), (x, y +80)), 3)
+    counter=0
+    while counter < 4:
+        pygame.draw.line(window, (50, 50, 50), (x, y +16 +counter *16), (x +80, y +16 +counter *16), 3)
+        pygame.draw.line(window, (50, 50, 50), (x +16 +counter *16, y), (x +16 +counter *16, y +80), 3)
+        counter+=1
+
+
+###################################                       ###########################
+###################################       COMBINING       ###########################
+###################################                       ##########################
+
+
+
+def get_current_section(x, y, activation):
+    counter=0
+    while counter < len(activation):
+        if activation[counter] == True:
+            current_section = counter
+            break
+        counter+=1
+    if current_section == 1:
+        if x > 1040:
+            current_section = 3
+        elif x > 520:
+            current_section = 2
+        else:
+            current_section = 1
+    return current_section
+
+def get_current_row(x, y, list_of_rows):
+    counter_row=0
+    current_row=""
+    while counter_row < len(list_of_rows):
+        if y >= 25 +counter_row *145 and y <= 125 +counter_row *145:
+            current_row=counter_row
+        counter_row+=1
+    return current_row
+
+def get_current_column(x, y, list_of_a_row, section):
+    counter_column=0
+    current_column=""
+    if section == 1 or section == 2:
+        x-=520 *section
+    while counter_column < len(list_of_a_row):
+        if x >= 15 +counter_column *130 and x <= 115 +counter_column *130:
+            current_column=counter_column
+        counter_column+=1
+    return current_column
+
+def get_number_of_requirements(section, row, column, required_items):
+    # get the length of the tuple in required items
+    number_of_requirements=len(required_items[section][row][column])
+    return number_of_requirements
+
+def check_requirements(section, row, column, number_of_requirements, s_amounts, num_amounts, section_amounts, turn):
+    y_n = False
+    counter = 0
+    if s_amounts[section][row][column][0] == "crafting table" or s_amounts[section][row][column][0] == "craft":
+        # increase the counter so that you ignore the "crafting table" and "craft"
+        counter+=1
+        if s_amounts[section][row][column][0] == "crafting table":
+            # if you don't have a crafting table it's atomatically false
+            if section_amounts[0][2][2] < 1:
+                y_n = False
+                return y_n
+    # number_of_requirments -1 because number_of_requirments is the output and we're checking the output
+    while counter < number_of_requirements-1:
+        required_item_tuple = s_amounts[section][row][column][counter]
+        # ie (0,1,1) is coarse dirt 0 ist the section 1 is the row and 1 is the column
+        required_amount = num_amounts[section][row][column][counter]
+                                              
+        place = 0
+        # if the first part of the tuple is "mineable"
+        # you need the mined version
+        if required_item_tuple[place] == "mineable":
+            place +=1
+            # check if you have the mined version 
+            if section_amounts[required_item_tuple[place]][required_item_tuple[place +1]][required_item_tuple[place +2]][1] >= num_amounts[section][row][column][counter]:
+                y_n = True
+            else:
+                y_n = False
+                return y_n
+        # check if you have the current required item and at least the minimum amount
+        elif section_amounts[required_item_tuple[place]][required_item_tuple[place +1]][required_item_tuple[place +2]] >= num_amounts[section][row][column][counter]:
+            # continue the loop until you either don't have a resource or you have everything
+            y_n = True
+        else:
+            y_n = False
+            return y_n
+        counter+=1
+    turn[0] += 3
+    if s_amounts[section][row][column][0] == "crafting table" or s_amounts[section][row][column][0] == "craft":
+        turn[0] += 2
+    return y_n
+
+def ask_y_n_for_tool(section, row, column, number_of_requirements, s_amounts, section_amounts, turn):
+    
+    y_n_input = "yes"
+    output_item_tuple = s_amounts[section][row][column][number_of_requirements -1]
+    # check if it's a tool
+    if type(section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]]) == list and section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]][0] == "tool":
+        # if the tool already has maximum durability
+        if section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]][1] == section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]][2]:
+            print("You already have this tool")
+            y_n_input="no"
+        # if the tool's been partly used
+        elif section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]][1] >= 1:
+            y_n_input=input("You already have this tool, but would you like to make a new one that overwrites the old one? ")
+        # if you don't have a tool
+        else:
+            y_n_input=input("Are you sure you want to craft this tool? ")
+    
+    y_n = True
+    # check if the player didn't say yes
+    if y_n_input.lower() != "yes":
+        y_n = False
+        turn[0]-=5
+    return y_n
+
+def change_tool_durability(section, row, column, number_of_requirements, s_amounts, section_amounts, y_n):
+    
+    output_item_tuple = s_amounts[section][row][column][number_of_requirements -1]
+    # check if it's a tool
+    if type(section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]]) == list and section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]][0] == "tool" and y_n == True:
+        # set the tool to maximum durability 
+        # the list is ["tool", current_durability, maximum durability]
+        section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]][1] = section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]][2]
+
+def decrease_requirements(section, row, column, number_of_requirements, s_amounts, num_amounts, section_amounts):
+    
+    counter=0
+    # to avoid "crafting", etc
+    if type(s_amounts[section][row][column][0]) == str:
+        counter+=1
+    # number_of_requirments -1 because number_of_requirments is the output and we're decresing the input
+    while counter < number_of_requirements-1:
+        # mineable should not be counted
+        if s_amounts[section][row][column][counter][0] == "mineable":
+            section_amounts[s_amounts[section][row][column][counter][1]][s_amounts[section][row][column][counter][2]][s_amounts[section][row][column][counter][3]][1]-=num_amounts[section][row][column][counter]
+            # decrease the mined version
+        else:
+            # decrease the amount from the required item
+            section_amounts[s_amounts[section][row][column][counter][0]][s_amounts[section][row][column][counter][1]][s_amounts[section][row][column][counter][2]]-=num_amounts[section][row][column][counter]
+        counter+=1
+
+def increase_output(section, row, column, number_of_requirements, s_amounts, num_amounts, section_amounts):
+    
+    output_amount = num_amounts[section][row][column][number_of_requirements -1]
+    output_item_tuple = s_amounts[section][row][column][number_of_requirements -1]
+    # check if what you are going to get needs to be mined later
+    if output_item_tuple[0] == "mineable":
+        # give the user the unmined version
+        section_amounts[output_item_tuple[1]][output_item_tuple[2]][output_item_tuple[3]][2] +=output_amount
+    # if it's a tool don't do anything
+    elif type(section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]]) == list and section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]][0] == "tool":
+        return
+    else:
+        # increase the last item in the s_amounts list (which is what you want to increase) by the num_amount
+        section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]] +=output_amount
+
+def change_amounts(section, row, column, section_amounts, turn):
+    
+    ###############   what resources you combine   #############
+    
+    # guide:
+    # "not combineable" means you can not combine stuff to aquire this item
+    # the last tuple is what you get
+    # the other tuples are what you need
+    # "crafting table" means you need a crafting table
+    # if the tuple has "mineable" in it, it will make sure that the resource is mined or given in the not mined form 
+    # row 2
+    # the tuple is the amount of each item you need 
+    # for example a stick needs 2 wood planks and you get 4 sticks ("craft",2,4)
+    
+    # section 1 resources requirements
+    s1_row_1=["not combinable", "not combinable", ((0,0,0),(0,0,1),(0,0,2)), "not combinable"]
+    num1_row_1=["not combinable", "not combinable", ( 1   ,   1   ,   1   ), "not combinable"]
+
+    s1_row_2=[((0,0,1),(0,0,3),(1,0,0)), ((0,0,2),(0,1,0),(1,1,1)), ((0,0,3),(0,1,1),(1,1,2)), "not combinable"]
+    num1_row_2=[( 1   ,   1   ,   1   ), (   1   ,   1   ,   1   ), (   1   ,   1   ,   2   ), "not combinable"]
+    
+    s1_row_3=["not combinable", ((0,2,0),(0,1,3),(0,2,1)), ("craft",(0,2,1),(0,2,2)), ("craft",(0,2,1),(0,2,3))]
+    num1_row_3=["not combinable", ( 1   ,   1   ,   1   ), ("craft",   4   ,   1  ),  ("craft",   2   ,   4   )]
+    
+    s1_amounts=[s1_row_1, s1_row_2, s1_row_3]
+    num1_amounts=[num1_row_1, num1_row_2, num1_row_3]
+
+    
+    # section 2 resources requirements
+    s2_row_1=[((0,1,2),(0,1,3),(1,0,0)), ((1,0,0),(0,1,3),("mineable", 1,0,1)), ("crafting table",("mineable", 1,0,1),(1,0,2)), (("mineable", 1,0,1),(0,1,2),(1,0,3))]
+    num2_row_1=[( 1   ,   1   ,   1   ), (   1   ,   1   ,               2)   , ("crafting table",          8        ,   1)   , (          1        ,   1   ,   2   )]
+    
+    s2_row_2=["not combinable", ("crafting table",(1,1,0),(1,1,1)), ((1,0,0),(0,1,3),("mineable", 1,1,2)), ((2,1,1),(1,1,3))]
+    num2_row_2=["not combinable", ("crafting table", 3   ,   3   ), (   1   ,   1,             2        ), (   5   ,   1   )]
+    
+    s2_row_3=[("crafting table",(1,1,3),(1,2,0)), ("crafting table",(1,1,3),(1,2,1)), ((1,2,1),(1,2,0),(1,2,2)), ((1,2,2),(1,2,1),(1,2,3))]
+    num2_row_3=[("crafting table", 5   ,   1   ), ("crafting table",   3   ,   1   ), (   1   ,   1   ,   1   ), (   2   ,  -2   ,   1   )]
+    
+    s2_amounts=[s2_row_1, s2_row_2, s2_row_3]
+    num2_amounts=[num2_row_1, num2_row_2, num2_row_3]
+    
+    
+    # section 3 resources requirements
+    s3_row_1=[((0,0,0),(2,0,0)), ((2,0,0),(1,1,1),(2,0,1)), "not combinable", ((1,2,2),(2,0,2),(1,2,1),(2,0,3))]
+    num3_row_1=[( 30  ,   2   ), (   1   ,   1   ,   1   ), "not combinable", (   1   ,   1   ,  -1   ,   1   )]
+    
+    s3_row_2=[((1,1,3),(0,2,3),(2,1,0)), ("craft",(2,1,0),(2,1,1)), ("craft",(2,0,3),(2,1,1),(2,1,2)), ((0,0,0),(0,2,3),(2,1,3))]
+    num3_row_2=[( 1   ,   1   ,   1   ), ("craft",   1   ,   3   ), ("craft",   1   ,   1   ,   2   ), (   1   ,   1   ,   2   )]
+    
+    s3_row_3=["not combinable", ((2,1,2),(2,2,0),(2,2,1)), "diamond", ((2,2,2),(2,2,1),(2,2,3))]
+    num3_row_3=["not combinable", ( 1   ,   1   ,   1   ), "diamond", (   1   ,   1   ,   1   )]
+    
+    s3_amounts=[s3_row_1, s3_row_2, s3_row_3]
+    num3_amounts=[num3_row_1, num3_row_2, num3_row_3]
+    
+    
+    # section 4 resources requirements
+    s4_row_1=["not combinable", ("craft",(0,2,1),(3,0,1)), "not combinable", "not combinable", "not combinable"]
+    num4_row_1=["not combinable", ("craft", 2   ,   4   ), "not combinable", "not combinable", "not combinable"]
+    
+    s4_row_2=[("crafting table", (0,2,1),(0,2,3),(3,1,0)), ("crafting table", ("mineable", 1,0,1), (0,2,3),(3,1,1)), ("crafting table", (1,1,3), (0,2,3),(3,1,2)), ("crafting table", (2,2,1), (0,2,3),(3,1,3)), ("crafting table", (0,2,1),(0,2,3),(3,1,4))]
+    num4_row_2=[("crafting table",  3   ,   2   ,   1   ), ("crafting table",           3        ,    2   ,   1   ), ("crafting table",    3   ,    2   ,   1   ), ("crafting table",    3   ,    2   ,   1   ), ("crafting table",    2   ,   1   ,   1   )]
+    
+    s4_row_3=[("crafting table", ("mineable", 1,0,1), (0,2,3),(3,2,0)), ("crafting table", (1,1,3),(0,2,3),(3,2,1)), ("crafting table", (2,2,1),(0,2,3),(3,2,2)), ("crafting table", "string", (0,2,3),(3,2,3)), ("crafting table", (0,1,3),(0,2,3), "feather",(3,2,4))]
+    num4_row_3=[("crafting table",        2         ,    1   ,   1   ), ("crafting table",    2   ,   1   ,   1   ), ("crafting table",    2   ,   1   ,   1   ), ("crafting table",     3   ,    3   ,   1   ), ("crafting table",    1   ,   1   ,     1    ,   4   )]
+    
+    s4_amounts=[s4_row_1, s4_row_2, s4_row_3]
+    num4_amounts=[num4_row_1, num4_row_2, num4_row_3]
+    
+    
+    # section 5 resources requirements
+    s5_row_1=["not combinable", ("crafting table", ("mineable", 1,0,1),(0,2,3),(4,0,1))]
+    num5_row_1=["not combinable", ("crafting table",        2         ,   2   ,   1   )]
+    
+    s5_row_2=[("crafting table", (1,1,3),(0,2,3),(4,1,0)), ("crafting table", (2,2,1),(0,2,3),(4,1,1))]
+    num5_row_2=[("crafting table",  2   ,   2   ,   1   ), ("crafting table",    2   ,   2   ,   1   )]
+    
+    #s5_row_3=[0,0,0,0]
+    #num5_row_3=[0,0,0,0]
+    
+    s5_amounts=[s5_row_1, s5_row_2]
+    num5_amounts=[num5_row_1, num5_row_2]
+    
+    
+    # all section amounts so that they can be referenced to
+    s_amounts=[s1_amounts, s2_amounts, s3_amounts, s4_amounts, s5_amounts]
+    num_amounts=[num1_amounts, num2_amounts, num3_amounts, num4_amounts, num5_amounts]
+    
+    
+    
+    ################################################################
+    
+    number_of_requirements = get_number_of_requirements(section, row, column, s_amounts)
+    # check if it's "not combineable"
+    if type(s_amounts[section][row][column]) == str:
+        number_of_requirements=0
+    # get a boolean saying if you have all the requirements
+    have_all_requirements = check_requirements(section, row, column, number_of_requirements, s_amounts, num_amounts, section_amounts, turn)
+    
+    if have_all_requirements == True:
+        y_n_for_tool = ask_y_n_for_tool(section, row, column, number_of_requirements, s_amounts, section_amounts, turn)
+        if y_n_for_tool == True:
+            change_tool_durability(section, row, column, number_of_requirements, s_amounts, section_amounts, y_n_for_tool)
+            decrease_requirements(section, row, column, number_of_requirements, s_amounts, num_amounts, section_amounts)
+            increase_output(section, row, column, number_of_requirements, s_amounts, num_amounts, section_amounts)
 
