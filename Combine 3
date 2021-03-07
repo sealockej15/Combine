@@ -4,7 +4,7 @@ Combine_3
 
 Description:
 """
-import pygame, random, functions, pygame.freetype
+import pygame, random, functions, drawing_functions,  pygame.freetype
 pygame.init()
 
 # section 1 resources amounts
@@ -172,10 +172,10 @@ while game:
     ######################## draw window ######################
     
     # set the window size according to what sections are activated        
-    functions.set_window_size(activation, window_dimensions)
+    drawing_functions.set_window_size(activation, window_dimensions)
     # if the size needs to be changed, change it
     if change_window_size == True:
-        window = functions.init_window(window_dimensions)
+        window = drawing_functions.init_window(window_dimensions)
         print("size changed")
         change_window_size=False
 
@@ -189,78 +189,78 @@ while game:
     if activation[inventory] == True:
         x=25
         y=35
-        functions.draw_section_boxes(x, y, 3, 2, 0, section_amounts, window)
-        functions.draw_row_seperaters(x, y, 3, 2, window)
+        drawing_functions.draw_section_boxes(x, y, 3, 2, 0, section_amounts, window)
+        drawing_functions.draw_row_seperaters(x, y, 3, 2, window)
         titles=["Tools", "Farming", "Armor", "Spawners", "Main Area", ""]
         x_offset_for_titles=[30, 20, 30, 15, 15, 0]
         bold = pygame.freetype.Font("Archivo-Bold.ttf", 15)
-        functions.display_names(x, y, 3, 2, titles, x_offset_for_titles, bold, window)
-        draw_functions_0=[functions.draw_diamond_pickaxe_icon, functions.draw_diamond_hoe_icon, functions.draw_diamond_armor, functions.draw_spawner, functions.draw_crafting_table, functions.draw_blank]
-        functions.draw_section_blocks(x, y, 3, 2, draw_functions_0, current_tool, tools, window)
+        drawing_functions.display_names(x, y, 3, 2, titles, x_offset_for_titles, bold, window)
+        draw_functions_0=[drawing_functions.draw_diamond_pickaxe_icon, drawing_functions.draw_diamond_hoe_icon, drawing_functions.draw_diamond_armor, drawing_functions.draw_spawner, drawing_functions.draw_crafting_table, drawing_functions.draw_blank]
+        drawing_functions.draw_section_blocks(x, y, 3, 2, draw_functions_0, current_tool, tools, window)
     
     # if section 1 (Crafting) is activated
     if activation[crafting] == True:
         x=25
         y=35
         # all the items that'll be drawn
-        draw_functions_1=[functions.draw_grass, functions.draw_mushroom, functions.draw_podzol, functions.draw_dirt, functions.draw_mycelium, functions.draw_coarse_dirt, functions.draw_gravel, functions.draw_flint, functions.draw_chest, functions.draw_wood_planks, functions.draw_crafting_table, functions.draw_stick]
+        draw_functions_1=[drawing_functions.draw_grass, drawing_functions.draw_mushroom, drawing_functions.draw_podzol, drawing_functions.draw_dirt, drawing_functions.draw_mycelium, drawing_functions.draw_coarse_dirt, drawing_functions.draw_gravel, drawing_functions.draw_flint, drawing_functions.draw_chest, drawing_functions.draw_wood_planks, drawing_functions.draw_crafting_table, drawing_functions.draw_stick]
         # the names of the items
         titles=["Grass", "Mushroom Block", "Podzol", "Dirt", "Mycelium", "Coarse Dirt", "Gravel", "Flint", "Chests", "Wood Planks", "Crafting Tables", "Sticks"]
         x_offset_for_titles=[30, -10, 25, 35, 15, 10, 25, 35, 25, 0, -5, 25]
         names=["Seeds", "Mushrooms", "Podzol", "Dirt", "Mycelium", "Coarse Dirt", "Gravel", "Flint", "Chests", "Wood Planks", "Crafting Tables", "Sticks"]
-        functions.draw_section(x, y, crafting-1, section_amounts, 4, 3, draw_functions_1, titles, x_offset_for_titles, names, current_tool, tools, window)
+        drawing_functions.draw_section(x, y, crafting-1, section_amounts, 4, 3, draw_functions_1, titles, x_offset_for_titles, names, current_tool, tools, window)
     
     # if section 2 (Water) is activated
     if activation[water] == True:
         x=545
         y=35
         # all the items that'll be drawn
-        draw_functions_2=[functions.draw_coal, functions.draw_cobblestone, functions.draw_furnace, functions.draw_sand, functions.draw_glass, functions.draw_bottle, functions.draw_iron_ore, functions.draw_iron_ingot, functions.draw_cauldron, functions.draw_bucket, functions.draw_water_bucket, functions.draw_infinite_water]
+        draw_functions_2=[drawing_functions.draw_coal, drawing_functions.draw_cobblestone, drawing_functions.draw_furnace, drawing_functions.draw_sand, drawing_functions.draw_glass, drawing_functions.draw_bottle, drawing_functions.draw_iron_ore, drawing_functions.draw_iron_ingot, drawing_functions.draw_cauldron, drawing_functions.draw_bucket, drawing_functions.draw_water_bucket, drawing_functions.draw_infinite_water]
         # the names of the items
         titles=["Coal", "Cobblestone","Furnace", "Sand", "Glass", "Bottle", "Iron Ore", "Iron Ingot", "Cauldron", "Bucket", "Water Bucket", "Infinite Water"]
         x_offset_for_titles=[30, 5, 20, 30, 30, 25, 20, 15, 20, 25, 0, 0]
         names=["Coals", "Cobblestones", "Furnaces", "Sand", "Glass", "Bottles", "Iron Ores", "Iron Ingots", "Cauldrons", "Buckets", "Water Buckets", "INFINITE"]
         # draws the section
-        functions.draw_section(x, y, water-1, section_amounts, 4, 3, draw_functions_2, titles, x_offset_for_titles, names, current_tool, tools, window)
+        drawing_functions.draw_section(x, y, water-1, section_amounts, 4, 3, draw_functions_2, titles, x_offset_for_titles, names, current_tool, tools, window)
     
     # if section 3 (Diamond) is activated
     if activation[diamond] == True:
         x=1065
         y=35
         # all the items that'll be drawn
-        draw_functions_3=[functions.draw_chicken_egg, functions.draw_witch_egg, functions.draw_glowstone, functions.draw_lapis, functions.draw_bone, functions.draw_bone_meal, functions.draw_dye, functions.draw_leaves, functions.draw_apple, functions.draw_diamond, functions.draw_badge, functions.draw_diamond_badge]
+        draw_functions_3=[drawing_functions.draw_chicken_egg, drawing_functions.draw_witch_egg, drawing_functions.draw_glowstone, drawing_functions.draw_lapis, drawing_functions.draw_bone, drawing_functions.draw_bone_meal, drawing_functions.draw_dye, drawing_functions.draw_leaves, drawing_functions.draw_apple, drawing_functions.draw_diamond, drawing_functions.draw_badge, drawing_functions.draw_diamond_badge]
         # the names of the items
         titles=["Egg", "Witch Egg", "Glowstone", "Lapis Lazuli", "Bone", "Bone Meal", "Light Blue Dye", "Leaves", "Apple", "DIAMOND!!!", "Badge", "Diamond Badge"]
         x_offset_for_titles=[35, 10, 10, 5, 30, 10, 0, 25, 30, 10, 25, -10]
         names=["Eggs", "Witch Eggs", "Glowstone", "Lapis", "Bones", "Bone Meal", "Dyes", "Leaves", "Apples", "DIAMONDS!", "Badges", "Badge 1"]
         # draws the section
-        functions.draw_section(x, y, diamond-1, section_amounts, 4, 3, draw_functions_3, titles, x_offset_for_titles, names, current_tool, tools, window)
+        drawing_functions.draw_section(x, y, diamond-1, section_amounts, 4, 3, draw_functions_3, titles, x_offset_for_titles, names, current_tool, tools, window)
     
     # if section 4 (Tools) is activated
     if activation[tools] == True:
         x=25
         y=35
         # all the items that'll be drawn
-        draw_functions_4=[functions.draw_wood_planks, functions.draw_stick, functions.draw_cobblestone, functions.draw_iron_ingot, functions.draw_diamond, (functions.draw_wood_pickaxe, "tool", wood_pickaxe), (functions.draw_stone_pickaxe, "tool", stone_pickaxe), (functions.draw_iron_pickaxe, "tool", iron_pickaxe), (functions.draw_diamond_pickaxe, "tool", diamond_pickaxe), (functions.draw_wood_sword, "tool", wood_sword), (functions.draw_stone_sword, "tool", stone_sword), (functions.draw_iron_sword, "tool", iron_sword), (functions.draw_diamond_sword, "tool", diamond_sword), (functions.draw_bow, "tool", bow), functions.draw_arrow]
+        draw_functions_4=[drawing_functions.draw_wood_planks, drawing_functions.draw_stick, drawing_functions.draw_cobblestone, drawing_functions.draw_iron_ingot, drawing_functions.draw_diamond, (drawing_functions.draw_wood_pickaxe, "tool", wood_pickaxe), (drawing_functions.draw_stone_pickaxe, "tool", stone_pickaxe), (drawing_functions.draw_iron_pickaxe, "tool", iron_pickaxe), (drawing_functions.draw_diamond_pickaxe, "tool", diamond_pickaxe), (drawing_functions.draw_wood_sword, "tool", wood_sword), (drawing_functions.draw_stone_sword, "tool", stone_sword), (drawing_functions.draw_iron_sword, "tool", iron_sword), (drawing_functions.draw_diamond_sword, "tool", diamond_sword), (drawing_functions.draw_bow, "tool", bow), drawing_functions.draw_arrow]
         # the names of the items
         titles=["Wood Plank", "Stick", "Cobblestone", "Iron Ingot", "DIAMOND!!!", "Wood Pickaxe", "Stone Pickaxe", "Iron Pickaxe", "Diamond Pickaxe", "Wood Sword", "Stone Sword", "Iron Sword", "Diamond Sword", "Bow", "Arrow"]
         x_offset_for_titles=[10, 30, 5, 15, 5, 0, 0, 5, -15, 5, 5, 10, -5, 35, 30]
         names=["Wood Planks", "Sticks", "Cobblestones", "Iron Ingots", "DIAMONDS!", "Durability", "Durability", "Durability", "Durability", "Durability", "Durability", "Durability", "Durability", "Durability", "Arrows"]
         # draws the section
-        functions.draw_section(x, y, tools-1, section_amounts, 5, 3, draw_functions_4, titles, x_offset_for_titles, names, current_tool, all_tools, window)
+        drawing_functions.draw_section(x, y, tools-1, section_amounts, 5, 3, draw_functions_4, titles, x_offset_for_titles, names, current_tool, all_tools, window)
     
     # if section 5 (Farming) is activated
     if activation[farming] == True:
         x=25
         y=35
         # all the items that'll be drawn
-        draw_functions_5=[functions.draw_farm_dirt, (functions.draw_stone_hoe, "tool", stone_hoe), (functions.draw_iron_hoe, "tool", iron_hoe), (functions.draw_diamond_hoe, "tool", diamond_hoe)]
+        draw_functions_5=[drawing_functions.draw_farm_dirt, (drawing_functions.draw_stone_hoe, "tool", stone_hoe), (drawing_functions.draw_iron_hoe, "tool", iron_hoe), (drawing_functions.draw_diamond_hoe, "tool", diamond_hoe)]
         # the names of the items
         titles=["Farm Dirt", "Stone Hoe", "Iron Hoe", "Diamond Hoe"]
         x_offset_for_titles=[20, 15, 20, 0]
         names=["Farm Dirt", "Durability", "Durability", "Durability"]
         # draws the section
-        functions.draw_section(x, y, farming-1, section_amounts, 2, 2, draw_functions_5, titles, x_offset_for_titles, names, current_tool, all_tools, window)
+        drawing_functions.draw_section(x, y, farming-1, section_amounts, 2, 2, draw_functions_5, titles, x_offset_for_titles, names, current_tool, all_tools, window)
     
     pygame.display.flip()
 
