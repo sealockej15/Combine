@@ -13,7 +13,7 @@ section_1_row_2=[0,0,5,5]
 section_1_row_3=[0,1,1,5]
 section_1_amounts=[section_1_row_1, section_1_row_2, section_1_row_3]
 # section 2 resources amounts
-section_2_row_1=[0,["mineable", 8, 2],0,0]
+section_2_row_1=[0,["mineable", 10, 2],0,0]
 section_2_row_2=[0,0,["mineable", 0, 0],4]
 section_2_row_3=[0,0,0,0]
 section_2_amounts=[section_2_row_1, section_2_row_2, section_2_row_3]
@@ -44,10 +44,25 @@ turn = [0]
 window_dimensions=[0,0]
 # current tool
 current_tool=""
-all_tools=["wood pickaxe", "stone pickaxe", "iron pickaxe", "diamond pickaxe", "wood sword", "stone sword", "iron sword", "diamond sword", "bow", "stone hoe", "iron hoe", "diamond hoe"]
+wood_pickaxe = 0
+stone_pickaxe = 1 
+iron_pickaxe = 2
+diamond_pickaxe = 3
+wood_sword = 4
+stone_sword = 5
+iron_sword = 6
+diamond_sword = 7
+bow = 8
+stone_hoe = 9
+iron_hoe = 10
+diamond_hoe = 11
+all_tools = [wood_pickaxe, stone_pickaxe, iron_pickaxe, diamond_pickaxe , wood_sword , stone_sword , iron_sword , diamond_sword , bow , stone_hoe , iron_hoe , diamond_hoe]
+all_tools_boxes = [[3,1,0], [3,1,1], [3,1,2], [3,1,3], [3,1,4], [3,2,0], [3,2,1], [3,2,2], [3,2,3], [4,0,1], [4,1,0], [4,1,1]]
 # what sections should be drawn
 section_2_always_true = False
 section_3_always_true = False
+
+smelt_numbers=["", pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_1, pygame.K_8]
 
 # section positions
 inventory=0
@@ -60,7 +75,7 @@ farming=5
 activation=[False, True, False, False, False, False]
 change_window_size=True
 
-change=0
+change=-1
 
 
 
@@ -77,19 +92,43 @@ while game:
             # if space is pressed COMBINE!!!
             elif event.key == pygame.K_SPACE:
                 x, y = pygame.mouse.get_pos()
-                current_section = functions.get_current_section(x, y, activation) -1
-                print("section " +str(current_section))
-                # you can't combine in your inventory
-                if current_section != -1:
-                    current_row = functions.get_current_row(x, y, section_amounts[current_section])
-                    print("row " +str(current_row))
-                    # is it in a box?
-                    if current_row != "":
-                        current_column = functions.get_current_column(x, y, section_amounts[current_section][0], current_section)
-                        print("column " +str(current_column))
-                        # is it in a box?
-                        if current_column != "":
-                            functions.change_amounts(current_section, current_row, current_column, section_amounts, turn)                
+                # gets a list with the section, row, and column in that order
+                section_row_column = functions.get_current_box(x, y, section_amounts, activation)
+                # if you aren't not in a box
+                if section_row_column != False:
+                    functions.change_amounts(section_row_column[0], section_row_column[1], section_row_column[2], section_amounts, turn)                
+                
+            elif event.key == pygame.K_RETURN:
+                x, y = pygame.mouse.get_pos()
+                # if you're in the inventory
+                if activation[inventory] == True:
+                    section_to_activate = functions.find_inventory_box(x, y, 2, 3)
+                    functions.change_sections(section_to_activate, activation)
+                    change_window_size=True
+                # mining
+                else:
+                    x, y = pygame.mouse.get_pos()
+                    section_row_column = functions.get_current_box(x, y, section_amounts, activation)
+                    mineable_objects_boxes = [[0,0,0], [0,0,1], [0,0,2], [0,1,2], [0,2,0], [1,0,1], [1,1,2], [1,2,1], [2,0,1], [2,1,3]]
+                    mineable_objects = [[0,0,0], [0,0,1], [0,0,2], [0,1,2], [0,2,0], ["needs tool", (0,4), [1,0,1], 2], ["needs tool", (1,4), [1,1,2], 2], ["fillable", [1,2,1]], [2,0,1], [2,1,3]]
+                    mined_output = [[0,0,0], [0,0,1], [0,0,3], [0,1,3], [0,2,0], ["needs tool", [1,0,1], 1], ["needs tool", [1,1,2], 1], ["fillable", [1,2,2]], ["spawn egg"], [2,2,0]]
+                    if section_row_column in mineable_objects_boxes:
+                        functions.mining(section_row_column[0], section_row_column[1], section_row_column[2], mineable_objects_boxes, mineable_objects, mined_output, section_amounts, current_tool, all_tools_boxes)
+                        
+                                    
+            # if a number is pressed the user wants to smelt something
+            elif event.key in smelt_numbers:
+                x, y = pygame.mouse.get_pos()
+                section_row_column = functions.get_current_box(x, y, section_amounts, activation)
+                smeltable_objects = [[1,0,3], [1,1,2]]
+                smelted_output = [[1,1,0], [1,1,3]]
+                if section_row_column in smeltable_objects:
+                    smelt_quantity = functions.check_number_pressed(event.key, smelt_numbers)
+                    smeltable_object_index = functions.get_smelt_index(section_row_column, smeltable_objects)
+                    y_n = functions.smelt_requirements(smelt_quantity, smeltable_objects, smeltable_object_index, section_amounts)
+                    if y_n == True:
+                        functions.reduce_smeltable_object(smeltable_objects, smeltable_object_index, smelt_quantity, section_amounts)
+                        functions.increase_smelted_object(smelted_output, smeltable_object_index, smelt_quantity, section_amounts, turn)
                 
             elif event.key == pygame.K_a:
                 print(turn)
@@ -97,16 +136,6 @@ while game:
                 change+=1
                 current_tool = all_tools[change]
             
-            elif event.key == pygame.K_RETURN:
-                x, y = pygame.mouse.get_pos()
-                # if you're in the inventory
-                if activation[inventory] == True:
-                    inventory_sections=[4, 5, 6, 7, 1, 0, 0]
-                    
-                    section_to_activate = functions.find_inventory_box(x, y, 2, 3)
-                    functions.change_sections(inventory_sections, section_to_activate, activation)
-                    change_window_size=True
-
             # if any other key is pressed
             else:
                 functions.reset_activation(activation)
@@ -212,26 +241,26 @@ while game:
         x=25
         y=35
         # all the items that'll be drawn
-        draw_functions_4=[functions.draw_wood_planks, functions.draw_stick, functions.draw_cobblestone, functions.draw_iron_ingot, functions.draw_diamond, (functions.draw_wood_pickaxe, "tool", 0), (functions.draw_stone_pickaxe, "tool", 1), (functions.draw_iron_pickaxe, "tool", 2), (functions.draw_diamond_pickaxe, "tool", 3), (functions.draw_wood_sword, "tool", 4), (functions.draw_stone_sword, "tool", 5), (functions.draw_iron_sword, "tool", 6), (functions.draw_diamond_sword, "tool", 7), (functions.draw_bow, "tool", 8), functions.draw_arrow]
+        draw_functions_4=[functions.draw_wood_planks, functions.draw_stick, functions.draw_cobblestone, functions.draw_iron_ingot, functions.draw_diamond, (functions.draw_wood_pickaxe, "tool", wood_pickaxe), (functions.draw_stone_pickaxe, "tool", stone_pickaxe), (functions.draw_iron_pickaxe, "tool", iron_pickaxe), (functions.draw_diamond_pickaxe, "tool", diamond_pickaxe), (functions.draw_wood_sword, "tool", wood_sword), (functions.draw_stone_sword, "tool", stone_sword), (functions.draw_iron_sword, "tool", iron_sword), (functions.draw_diamond_sword, "tool", diamond_sword), (functions.draw_bow, "tool", bow), functions.draw_arrow]
         # the names of the items
         titles=["Wood Plank", "Stick", "Cobblestone", "Iron Ingot", "DIAMOND!!!", "Wood Pickaxe", "Stone Pickaxe", "Iron Pickaxe", "Diamond Pickaxe", "Wood Sword", "Stone Sword", "Iron Sword", "Diamond Sword", "Bow", "Arrow"]
         x_offset_for_titles=[10, 30, 5, 15, 5, 0, 0, 5, -15, 5, 5, 10, -5, 35, 30]
         names=["Wood Planks", "Sticks", "Cobblestones", "Iron Ingots", "DIAMONDS!", "Durability", "Durability", "Durability", "Durability", "Durability", "Durability", "Durability", "Durability", "Durability", "Arrows"]
         # draws the section
-        functions.draw_section(x, y, tools-1, section_amounts, 5, 3, draw_functions_4, titles, x_offset_for_titles, names, current_tool, tools, window)
+        functions.draw_section(x, y, tools-1, section_amounts, 5, 3, draw_functions_4, titles, x_offset_for_titles, names, current_tool, all_tools, window)
     
     # if section 5 (Farming) is activated
     if activation[farming] == True:
         x=25
         y=35
         # all the items that'll be drawn
-        draw_functions_5=[functions.draw_farm_dirt, (functions.draw_stone_hoe, "tool", 9), (functions.draw_iron_hoe, "tool", 10), (functions.draw_diamond_hoe, "tool", 11)]
+        draw_functions_5=[functions.draw_farm_dirt, (functions.draw_stone_hoe, "tool", stone_hoe), (functions.draw_iron_hoe, "tool", iron_hoe), (functions.draw_diamond_hoe, "tool", diamond_hoe)]
         # the names of the items
         titles=["Farm Dirt", "Stone Hoe", "Iron Hoe", "Diamond Hoe"]
         x_offset_for_titles=[20, 15, 20, 0]
         names=["Farm Dirt", "Durability", "Durability", "Durability"]
         # draws the section
-        functions.draw_section(x, y, farming-1, section_amounts, 2, 2, draw_functions_5, titles, x_offset_for_titles, names, current_tool, tools, window)
+        functions.draw_section(x, y, farming-1, section_amounts, 2, 2, draw_functions_5, titles, x_offset_for_titles, names, current_tool, all_tools, window)
     
     pygame.display.flip()
 
