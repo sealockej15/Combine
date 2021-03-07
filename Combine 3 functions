@@ -1,10 +1,5 @@
 # y+=145 because top = 25 box = 100 and bottom = 20
 
-"""
-functions
-
-Description:
-"""
 import random, pygame
 
 def set_window_size(activated_sections, window_dimensions):
@@ -32,7 +27,7 @@ def init_window(window_dimensions):
     window.fill((255,255,255))
     return window
     
-################### general functions ##################
+################### drawing functions ##################
 
 ####   drawing functions   ####
 
@@ -215,10 +210,65 @@ def find_inventory_box(x, y, max_row, max_column):
         row+=1
     return section
 
-def change_sections(inventory_sections, section_to_activate, activation):
+def change_sections(section_to_activate, activation):
+    inventory_sections=[4, 5, 6, 7, 1, 0, 0]
     reset_activation(activation)
     activation[inventory_sections[section_to_activate]] = True
 
+def get_current_section(x, y, activation):
+    counter=0
+    while counter < len(activation):
+        if activation[counter] == True:
+            current_section = counter
+            break
+        counter+=1
+    if current_section == 1:
+        if x > 1040:
+            current_section = 3
+        elif x > 520:
+            current_section = 2
+        else:
+            current_section = 1
+    return current_section
+
+def get_current_row(x, y, list_of_rows):
+    counter_row=0
+    current_row=""
+    while counter_row < len(list_of_rows):
+        if y >= 25 +counter_row *145 and y <= 125 +counter_row *145:
+            current_row=counter_row
+        counter_row+=1
+    return current_row
+
+def get_current_column(x, y, list_of_a_row, section):
+    counter_column=0
+    current_column=""
+    if section == 1 or section == 2:
+        x-=520 *section
+    while counter_column < len(list_of_a_row):
+        if x >= 15 +counter_column *130 and x <= 115 +counter_column *130:
+            current_column=counter_column
+        counter_column+=1
+    return current_column
+
+def get_current_box(x, y, section_amounts, activation):
+    section_row_column=[]
+    section_row_column.append(get_current_section(x, y, activation) -1)
+    print("section " +str(section_row_column[0]))
+    # you can't combine in your inventory
+    if section_row_column[0] != -1:
+        section_row_column.append(get_current_row(x, y, section_amounts[section_row_column[0]]))
+        print("row " +str(section_row_column[1]))
+        # is it in a box?
+        if section_row_column[1] != "":
+            section_row_column.append(get_current_column(x, y, section_amounts[section_row_column[0]][section_row_column[1]], section_row_column[0]))
+            print("column " +str(section_row_column[2]))
+            # is it in a box?
+            if section_row_column[2] != "":
+                return section_row_column       
+    return False
+    
+    
     
 #######################   section 0 (inventory)   ##################
 
@@ -496,7 +546,7 @@ def draw_diamond_armor(x, y, window):
 
 
 
-##########################   section 7 (spawners)
+####################   section 7 (spawners)   ##################
 
 
 
@@ -508,48 +558,22 @@ def draw_spawner(x, y, window):
         pygame.draw.line(window, (50, 50, 50), (x +16 +counter *16, y), (x +16 +counter *16, y +80), 3)
         counter+=1
 
+# what to worry about when adding a new section:
+# have all the draw functions
+# add a new thing called section#_amounts and section#_row1 ...
+# add the if section# is activated change window size
+# 
 
-###################################                       ###########################
-###################################       COMBINING       ###########################
-###################################                       ##########################
+
+
+#######################       COMBINING       ###########################
 
 
 
-def get_current_section(x, y, activation):
-    counter=0
-    while counter < len(activation):
-        if activation[counter] == True:
-            current_section = counter
-            break
-        counter+=1
-    if current_section == 1:
-        if x > 1040:
-            current_section = 3
-        elif x > 520:
-            current_section = 2
-        else:
-            current_section = 1
-    return current_section
-
-def get_current_row(x, y, list_of_rows):
-    counter_row=0
-    current_row=""
-    while counter_row < len(list_of_rows):
-        if y >= 25 +counter_row *145 and y <= 125 +counter_row *145:
-            current_row=counter_row
-        counter_row+=1
-    return current_row
-
-def get_current_column(x, y, list_of_a_row, section):
-    counter_column=0
-    current_column=""
-    if section == 1 or section == 2:
-        x-=520 *section
-    while counter_column < len(list_of_a_row):
-        if x >= 15 +counter_column *130 and x <= 115 +counter_column *130:
-            current_column=counter_column
-        counter_column+=1
-    return current_column
+# what to worry about when adding something combineable:
+#
+#
+#
 
 def get_number_of_requirements(section, row, column, required_items):
     # get the length of the tuple in required items
@@ -570,7 +594,7 @@ def check_requirements(section, row, column, number_of_requirements, s_amounts, 
     # number_of_requirments -1 because number_of_requirments is the output and we're checking the output
     while counter < number_of_requirements-1:
         required_item_tuple = s_amounts[section][row][column][counter]
-        # ie (0,1,1) is coarse dirt 0 ist the section 1 is the row and 1 is the column
+        # e.g. (0,1,1) is coarse dirt 0 ist the section 1 is the row and 1 is the column
         required_amount = num_amounts[section][row][column][counter]
                                               
         place = 0
@@ -601,6 +625,10 @@ def ask_y_n_for_tool(section, row, column, number_of_requirements, s_amounts, se
     
     y_n_input = "yes"
     output_item_tuple = s_amounts[section][row][column][number_of_requirements -1]
+    place = 0
+    # check if the output is mineable
+    if type(s_amounts[section][row][column][number_of_requirements -1]) == tuple and type(s_amounts[section][row][column][number_of_requirements -1][0]) == str:
+        return True
     # check if it's a tool
     if type(section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]]) == list and section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]][0] == "tool":
         # if the tool already has maximum durability
@@ -624,6 +652,9 @@ def ask_y_n_for_tool(section, row, column, number_of_requirements, s_amounts, se
 def change_tool_durability(section, row, column, number_of_requirements, s_amounts, section_amounts, y_n):
     
     output_item_tuple = s_amounts[section][row][column][number_of_requirements -1]
+    # check if the output is mineable
+    if type(s_amounts[section][row][column][number_of_requirements -1]) == tuple and type(s_amounts[section][row][column][number_of_requirements -1][0]) == str:
+        return
     # check if it's a tool
     if type(section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]]) == list and section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]][0] == "tool" and y_n == True:
         # set the tool to maximum durability 
@@ -767,4 +798,167 @@ def change_amounts(section, row, column, section_amounts, turn):
             change_tool_durability(section, row, column, number_of_requirements, s_amounts, section_amounts, y_n_for_tool)
             decrease_requirements(section, row, column, number_of_requirements, s_amounts, num_amounts, section_amounts)
             increase_output(section, row, column, number_of_requirements, s_amounts, num_amounts, section_amounts)
+
+#########################   mining   #############################
+
+
+
+# what to worry about when adding something mineable:
+#
+#
+#
+
+def get_index(section, row, column, mineable_objects_boxes):
+    counter = 0
+    while counter < len(mineable_objects_boxes):
+        if [section, row, column] == mineable_objects_boxes[counter]:
+            return counter
+        counter+=1
+
+def check_correct_tool(mineable_objects, index, all_tools_boxes, current_tool, section_amounts):
+    have_tool = False
+    if mineable_objects[index][0] == "needs tool":
+        if current_tool in range(mineable_objects[index][1][0], mineable_objects[index][1][1]):
+            # if you have more than 1 durability on the tool you are using
+            if section_amounts[all_tools_boxes[current_tool][0]][all_tools_boxes[current_tool][1]][all_tools_boxes[current_tool][2]][1] >= 1:
+                have_tool = True
+            else:
+                print("You don't have this tool")
+        else:
+            print("You don't have the right tool equipped")
+    # if you don't need a tool you can skip it
+    else:
+        have_tool = True
+    return have_tool
+
+def have_breakable_object(section, row, column, section_amounts):
+    have_object = False
+    if type(section_amounts[section][row][column]) == list and section_amounts[section][row][column] == "mineable":
+        if section_amounts[section][row][column][2] >= 1:
+            have_object = True
+    else:
+        if section_amounts[section][row][column] >= 1:
+            have_object = True
+    return have_object
+
+
+def mining(section, row, column, mineable_objects_boxes, mineable_objects, mined_output, section_amounts, current_tool, all_tools_boxes):
+    index = get_index(section, row, column, mineable_objects_boxes)
+    have_tool = check_correct_tool(mineable_objects, index, all_tools_boxes, current_tool, section_amounts)
+    if have_tool == False:
+        return
+    have_object = have_breakable_object(section, row, column, section_amounts)
+    if have_object == False:
+        return
+    print("worked!")
+    
+        
+        
+
+
+########################   smelting   ##########################
+
+
+
+# what to worry about when adding something smeltable:
+
+# add the item to the smeltable objects and smelted output lists
+
+
+def check_number_pressed(key, numbers):
+    counter = 1
+    while numbers[counter] != key:
+        counter +=1
+    return counter
+
+def get_smelt_index(box, smeltable_objects):
+    counter = 0
+    while box != smeltable_objects[counter]:
+        counter+=1
+    return counter
+
+def smelt_requirements(quantity, smeltable_objects, index, section_amounts):
+    y_n = False
+    # if it's mineable check the mined version
+    if type(section_amounts[smeltable_objects[index][0]][smeltable_objects[index][1]][smeltable_objects[index][2]]) == list:
+        if section_amounts[smeltable_objects[index][0]][smeltable_objects[index][1]][smeltable_objects[index][2]][1] >= quantity:
+            Continue = True
+    elif section_amounts[smeltable_objects[index][0]][smeltable_objects[index][1]][smeltable_objects[index][2]] >= quantity:
+        Continue = True
+    if Continue == True:
+        if section_amounts[1][0][2] >= 1:
+            if section_amounts[1][0][0] >= 1:
+                section_amounts[1][0][0]-=1
+                y_n = True
+            else:
+                print("You need coal to smelt items. ")
+        else:
+            print("You need a furnace to smelt items. ")
+    return y_n
+
+def reduce_smeltable_object(smeltable_objects, index, quantity, section_amounts):
+    # if it's mineable
+    if type(section_amounts[smeltable_objects[index][0]][smeltable_objects[index][1]][smeltable_objects[index][2]]) == list:
+        section_amounts[smeltable_objects[index][0]][smeltable_objects[index][1]][smeltable_objects[index][2]][1]-=quantity
+    else:
+        section_amounts[smeltable_objects[index][0]][smeltable_objects[index][1]][smeltable_objects[index][2]]-=quantity
+    
+def increase_smelted_object(smelted_output, index, quantity, section_amounts, turn):
+    # if the output has to be mined
+    if type(section_amounts[smelted_output[index][0]][smelted_output[index][1]][smelted_output[index][2]]) == list:
+        section_amounts[smelted_output[index][0]][smelted_output[index][1]][smelted_output[index][2]][2]+=quantity
+    else:
+        section_amounts[smelted_output[index][0]][smelted_output[index][1]][smelted_output[index][2]]+=quantity
+    turn[0]+=6*quantity
+
+
+
+
+
+
+
+
+
+
+
+
+# how to add a new section
+"""
+Step one   drawing it out
+
+Get all the drawing functions for each object
+Make sure to use the draw functions like draw_circle() or draw_block()
+Then, make sure to change the window size when the section is activated
+Make it accessible from the inventory
+In the main area, you will need the x and y coordinates, 
+the functions to draw the objects, the title offset, and the titles and names
+then fill out the draw_setion requirements
+
+
+Step two   adding the amounts
+
+On the top of the main section make "# of rows" lists
+each with "# of columns" slots and a section#_amounts list containing them
+Start all items at 0
+If the object is mineable make the slot a list and have
+["mineable", "mined amount" (starts as 0), unmined amount (also starts at 0)]
+For items from other sections ["reference", original section, original row, original column]
+For tools ["tool", "current durability" (starts as 0), max durability]
+
+Step three   making it work
+
+Go through instructions for combining
+if it's minable or smeltable read those instructions
+
+Now your done!
+"""
+
+
+
+
+
+
+
+
+
 
