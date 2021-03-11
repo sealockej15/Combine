@@ -191,6 +191,26 @@ def draw_section(x, y, section_number, all_resource_amounts, columns, rows, draw
 
 
 
+#######################   mini menu   ########################
+
+
+def draw_mini_menu(sections_rows_columns, activation, window, hp, xp_level, hunger, turn, current_tool, tool_names):
+    font = pygame.freetype.Font("Archivo-Regular.ttf", 15)
+    bold = pygame.freetype.Font("Archivo-Bold.ttf", 15)
+    counter = 0
+    while counter < len(activation):
+        if activation[counter] == True:
+            break
+        counter += 1
+    # y = 145 times the amount of rows in that section
+    y = 145 *sections_rows_columns[counter][1]
+    bold.render_to(window, (10, y +11), "HP: " +str(hp[0]))
+    bold.render_to(window, (75, y +10), "Hunger: " +str(hunger[0]) +"/20")
+    bold.render_to(window, (190, y +10), "Lvl: " +str(xp_level[0]))
+    bold.render_to(window, (240, y +11), "Turn: " +str(turn[0]))
+    bold.render_to(window, (325, y +10), "Tool: " +str(tool_names[current_tool]))
+
+
 #######################   section 0 (inventory)   ##################
 
 
