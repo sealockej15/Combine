@@ -74,26 +74,32 @@ def get_current_column(x, y, list_of_a_row, section):
 def get_current_box(x, y, section_amounts, activation):
     section_row_column=[]
     section_row_column.append(get_current_section(x, y, activation) -1)
-    print("section " +str(section_row_column[0]))
     # you can't combine in your inventory
     if section_row_column[0] != -1:
         section_row_column.append(get_current_row(x, y, section_amounts[section_row_column[0]]))
-        print("row " +str(section_row_column[1]))
         # is it in a box?
         if section_row_column[1] != "":
             section_row_column.append(get_current_column(x, y, section_amounts[section_row_column[0]][section_row_column[1]], section_row_column[0]))
-            print("column " +str(section_row_column[2]))
             # is it in a box?
             if section_row_column[2] != "":
                 return section_row_column       
     return False
     
-def get_index(section, row, column, array):
+def get_section_index(box, array):
     counter = 0
     while counter < len(array):
-        if [section, row, column] == array[counter]:
+        if box == array[counter]:
             return counter
         counter+=1
+
+def get_index(List, Object):
+    counter = 0
+    while counter < len(List):
+        if Object == List[counter]:
+            return counter
+        counter+=1
+    if counter == len(List):
+        return False
 
     
     
@@ -119,8 +125,13 @@ def get_number_of_requirements(section, row, column, required_items):
     number_of_requirements=len(required_items[section][row][column])
     return number_of_requirements
 
-def check_requirements(section, row, column, number_of_requirements, s_amounts, num_amounts, section_amounts, turn):
+def check_requirements(section, row, column, number_of_requirements, s_amounts, num_amounts, section_amounts, turn, combinations, items_crafted, time_objects, time_starting_turns):
     y_n = False
+    # check if the item increases over time
+    if s_amounts[section][row][column][len(s_amounts[section][row][column])-1] in time_objects:
+        counter = get_section_index((section, row, column), time_objects)
+        if time_starting_turns[counter][0] == True:
+            return False
     counter = 0
     if s_amounts[section][row][column][0] == "crafting table" or s_amounts[section][row][column][0] == "craft":
         # increase the counter so that you ignore the "crafting table" and "craft"
@@ -130,6 +141,7 @@ def check_requirements(section, row, column, number_of_requirements, s_amounts, 
             if section_amounts[0][2][2] < 1:
                 y_n = False
                 return y_n
+            
     # number_of_requirments -1 because number_of_requirments is the output and we're checking the output
     while counter < number_of_requirements-1:
         required_item_tuple = s_amounts[section][row][column][counter]
@@ -156,8 +168,11 @@ def check_requirements(section, row, column, number_of_requirements, s_amounts, 
             return y_n
         counter+=1
     turn[0] += 3
+    combinations[0] += 1
     if s_amounts[section][row][column][0] == "crafting table" or s_amounts[section][row][column][0] == "craft":
         turn[0] += 2
+        combinations[0] -= 1
+        items_crafted[0] += 1
     return y_n
 
 def ask_y_n_for_tool(section, row, column, number_of_requirements, s_amounts, section_amounts, turn):
@@ -232,7 +247,7 @@ def increase_output(section, row, column, number_of_requirements, s_amounts, num
         # increase the last item in the s_amounts list (which is what you want to increase) by the num_amount
         section_amounts[output_item_tuple[0]][output_item_tuple[1]][output_item_tuple[2]] +=output_amount
 
-def COMBINE(section, row, column, section_amounts, turn):
+def COMBINE(section, row, column, section_amounts, turn, combinations, items_crafted, time_objects, time_starting_turns):
     
     ###############   what resources you combine   #############
     
@@ -261,7 +276,7 @@ def COMBINE(section, row, column, section_amounts, turn):
 
     
     # section 2 resources requirements
-    s2_row_1=[((0,1,2),(0,1,3),(1,0,0)), ((1,0,0),(0,1,3),("mineable", 1,0,1)), ("crafting table",("mineable", 1,0,1),(1,0,2)), (("mineable", 1,0,1),(0,1,2),(1,0,3))]
+    s2_row_1=[((0,1,2),(0,1,3),(1,0,0)), ((1,0,0),(0,1,2),("mineable", 1,0,1)), ("crafting table",("mineable", 1,0,1),(1,0,2)), (("mineable", 1,0,1),(0,1,2),(1,0,3))]
     num2_row_1=[( 1   ,   1   ,   1   ), (   1   ,   1   ,               2)   , ("crafting table",          8        ,   1)   , (          1        ,   1   ,   2   )]
     
     s2_row_2=["not combinable", ("crafting table",(1,1,0),(1,1,1)), ((1,0,0),(0,1,3),("mineable", 1,1,2)), ((2,1,1),(1,1,3))]
@@ -303,17 +318,17 @@ def COMBINE(section, row, column, section_amounts, turn):
     
     
     # section 5 resources requirements
-    s5_row_1=["not combinable", ("crafting table", ("mineable", 1,0,1),(0,2,3),(4,0,1))]
-    num5_row_1=["not combinable", ("crafting table",        2         ,   2   ,   1   )]
+    s5_row_1=["not combinable", ((0,2,1),(0,2,3)), "not combineable", "not combineable", "not combineable", ((1,1,3),(0,2,3),(2,1,0)), ("craft",(2,1,0),(2,1,1))]
+    num5_row_1=["not combinable", ( 2   ,   4   ), "not combineable", "not combineable", "not combineable", ( 1   ,   1   ,   1   ), ("craft",   1   ,   3   )]
     
-    s5_row_2=[("crafting table", (1,1,3),(0,2,3),(4,1,0)), ("crafting table", (2,2,1),(0,2,3),(4,1,1))]
-    num5_row_2=[("crafting table",  2   ,   2   ,   1   ), ("crafting table",    2   ,   2   ,   1   )]
+    s5_row_2=[("crafting table", ("mineable", 1,0,1),(0,2,3),(4,1,0)), ("crafting table", (1,1,3),(0,2,3),(4,1,1)), ("crafting table", (2,2,1),(0,2,3),(4,1,2)), "not combineable", "not combineable", "not combineable", ((4,1,4), (1,2,3), (4,1,6))]
+    num5_row_2=[("crafting table",        2         ,   2   ,   1   ), ("crafting table",  2   ,   2   ,   1   ), ("crafting table",    2   ,   2   ,   1   ), "not combineable", "not combineable", "not combineable",   (   25  ,    1   ,    1   )]
     
-    #s5_row_3=[0,0,0,0]
-    #num5_row_3=[0,0,0,0]
+    s5_row_3=["not combineable", ( (0,0,0), (4,1,6), (4,2,1)), "not combineable", "not combineable", ((4,2,3), (4,1,6), (4,2,4)), ((0,0,0), (0,2,3), (4,2,5)), ((4,2,5), (2,1,1), (4,2,6))]
+    num5_row_3=["not combineable", (  25  ,    1   ,    1   ), "not combineable", "not combineable", (   25   ,    1   ,    1   ), (   3   ,    3   ,    1   ), (   1   ,    10  ,    1   )]
     
-    s5_amounts=[s5_row_1, s5_row_2]
-    num5_amounts=[num5_row_1, num5_row_2]
+    s5_amounts=[s5_row_1, s5_row_2, s5_row_3]
+    num5_amounts=[num5_row_1, num5_row_2, num5_row_3]
     
     
     # all section amounts so that they can be referenced to
@@ -327,9 +342,9 @@ def COMBINE(section, row, column, section_amounts, turn):
     number_of_requirements = get_number_of_requirements(section, row, column, s_amounts)
     # check if it's "not combineable"
     if type(s_amounts[section][row][column]) == str:
-        number_of_requirements=0
+        return
     # get a boolean saying if you have all the requirements
-    have_all_requirements = check_requirements(section, row, column, number_of_requirements, s_amounts, num_amounts, section_amounts, turn)
+    have_all_requirements = check_requirements(section, row, column, number_of_requirements, s_amounts, num_amounts, section_amounts, turn, combinations, items_crafted, time_objects, time_starting_turns)
     
     if have_all_requirements == True:
         y_n_for_tool = ask_y_n_for_tool(section, row, column, number_of_requirements, s_amounts, section_amounts, turn)
@@ -350,9 +365,11 @@ def COMBINE(section, row, column, section_amounts, turn):
 def check_correct_tool(mineable_objects, index, all_tools_boxes, current_tool, section_amounts):
     have_tool = False
     if mineable_objects[index][0] == "needs tool":
+        if current_tool == 0:
+            return have_tool
         if current_tool in range(mineable_objects[index][1][0], mineable_objects[index][1][1]):
             # if you have more than 1 durability on the tool you are using
-            if section_amounts[all_tools_boxes[current_tool][0]][all_tools_boxes[current_tool][1]][all_tools_boxes[current_tool][2]][1] >= 1:
+            if current_tool != 0 and section_amounts[all_tools_boxes[current_tool][0]][all_tools_boxes[current_tool][1]][all_tools_boxes[current_tool][2]][1] >= 1:
                 have_tool = True
             else:
                 print("You don't have this tool")
@@ -372,6 +389,9 @@ def have_breakable_object(section, row, column, section_amounts):
     # if it's blank
     elif [section, row, column] in no_requirements:
         have_object = True
+    elif type(section_amounts[section][row][column]) == list and section_amounts[section][row][column][0] == "reference":
+        if section_amounts[section_amounts[section][row][column][1]][section_amounts[section][row][column][2]][section_amounts[section][row][column][3]] >= 1:
+            have_object = True
     else:
         if section_amounts[section][row][column] >= 1:
             have_object = True
@@ -383,22 +403,22 @@ def decrease_breakable_object(section, row, column, section_amounts):
         section_amounts[section][row][column][2]-=1
     elif [section, row, column] in dont_decrease:
         return
-    elif type(section_amounts[section][row][column]) == list and type(section_amounts[section][row][column][0]) == str:
-        section_amounts[section][row][column][0]-=1
+    elif type(section_amounts[section][row][column]) == list and section_amounts[section][row][column][0] == "reference":
+        section_amounts[section_amounts[section][row][column][1]][section_amounts[section][row][column][2]][section_amounts[section][row][column][3]]-=1
     else:
         section_amounts[section][row][column]-=1
         
-def decrease_tool_durability(section_amounts, section, row, column, current_tool, all_tools_boxes):
-    if type(section_amounts[section][row][column]) == list and section_amounts[section][row][column][0] == "mineable":
+def decrease_tool_durability(section_amounts, mineable_objects, index, section, row, column, current_tool, all_tools_boxes):
+    if mineable_objects[index][0] == "needs tool":
         section_amounts[all_tools_boxes[current_tool][0]][all_tools_boxes[current_tool][1]][all_tools_boxes[current_tool][2]][1] -= 1
     
-def increase_mined_object(section, row, column, section_amounts, mined_output, index, random_objects, random_object_increase, turn):
+def increase_mined_object(section, row, column, section_amounts, mineable_objects, mined_output, index, random_objects, random_object_increase, turn, blocks_broken):
     if type(section_amounts[section][row][column]) == list and section_amounts[section][row][column][0] == "mineable":
         section_amounts[section][row][column][1]+=1
     # if it's randomized
     elif [section, row, column] in random_objects:
         # get the random_object index
-        index = get_index(section, row, column, random_objects)
+        index = get_section_index([section, row, column], random_objects)
         # gets a random number from 1 to #
         random_number = random.randint(random_object_increase[index][1], random_object_increase[index][2])
         if random_number == 1:
@@ -430,16 +450,24 @@ def increase_mined_object(section, row, column, section_amounts, mined_output, i
             spawn_egg_list[index][1].remove(spawn_egg_list[index][1][random_int])
             items_increased+=1
             
-        
+    elif mined_output[index][0] == "fillable":
+        # make sure you have water to fill the object with
+        if section_amounts[1][2][3] >= 1:
+            section_amounts[mined_output[index][1][0]][mined_output[index][1][1]][mined_output[index][1][2]] += 1
+        # otherwise give the user back their empty object and decrease the turn
+        else:
+            section_amounts[mineable_objects[index][1][0]][mineable_objects[index][1][1]][mineable_objects[index][1][2]] += 1
+            turn[0]-=2
     else:
         section_amounts[mined_output[index][0]][mined_output[index][1]][mined_output[index][2]]+=1
     turn[0] +=2
+    blocks_broken[0] += 1
 
-def mining(section, row, column, mineable_objects_boxes, mineable_objects, mined_output, section_amounts, current_tool, all_tools_boxes, turn):
+def mining(section, row, column, mineable_objects_boxes, mineable_objects, mined_output, section_amounts, current_tool, all_tools_boxes, turn, blocks_broken):
     random_objects = [[0,0,0], [0,2,0], [2,1,3]]
     # [0,0,0] is the output 1,3 is the range and 1 is the amount
     random_object_increase = [([0,0,0], 1,3, 1), ([0,2,0], 1,10, 1), ([2,2,0], 1,6, 1)]
-    index = get_index(section, row, column, mineable_objects_boxes)
+    index = get_section_index([section, row, column], mineable_objects_boxes)
     have_tool = check_correct_tool(mineable_objects, index, all_tools_boxes, current_tool, section_amounts)
     if have_tool == False:
         return
@@ -447,9 +475,8 @@ def mining(section, row, column, mineable_objects_boxes, mineable_objects, mined
     if have_object == False:
         return
     decrease_breakable_object(section, row, column, section_amounts)
-    decrease_tool_durability(section_amounts, section, row, column, current_tool, all_tools_boxes)
-    increase_mined_object(section, row, column, section_amounts, mined_output, index, random_objects, random_object_increase, turn)
-    print("worked!")
+    decrease_tool_durability(section_amounts, mineable_objects, index, section, row, column, current_tool, all_tools_boxes)
+    increase_mined_object(section, row, column, section_amounts, mineable_objects, mined_output, index, random_objects, random_object_increase, turn, blocks_broken)
     
         
         
@@ -464,11 +491,6 @@ def mining(section, row, column, mineable_objects_boxes, mineable_objects, mined
 # add the item to the smeltable objects and smelted output lists
 
 
-def check_number_pressed(key, numbers):
-    counter = 1
-    while numbers[counter] != key:
-        counter +=1
-    return counter
 
 def smelt_requirements(quantity, smeltable_objects, index, section_amounts):
     y_n = False
@@ -507,11 +529,46 @@ def increase_smelted_object(smelted_output, index, quantity, section_amounts, tu
 
 
 
+##################   Time   #####################
 
 
 
-
-
+def check_for_time_object_combination(section_amounts, turn, time_starting_turns, time_objects, how_often):
+    counter = 0
+    # loop through all time objects
+    while counter < len(time_objects):
+        # if the time object amount is over 1
+        if section_amounts[time_objects[counter][0]][time_objects[counter][1]][time_objects[counter][2]] >= 1:
+            if time_starting_turns[counter][0] == False:
+                time_starting_turns[counter][1] = turn[0]
+                # the user now has the time object
+                time_starting_turns[counter][0] = True
+                # decrease the amount by one
+                section_amounts[time_objects[counter][0]][time_objects[counter][1]][time_objects[counter][2]] -= 1
+                when_it_will_be_done = ["Your Cauldron will fill with water on turn ", "Your farm will grow to the next stage on turn ", "Your farm will grow to the next stage on turn " ]
+                extra = ["", "It will be fully grown on turn " +str(time_starting_turns[counter][1] + how_often[2]*3), "It will be fully grown on turn " +str(time_starting_turns[2][1] + how_often[2]*3)]
+                print(when_it_will_be_done[counter] +str((time_starting_turns[counter][1] + how_often[counter])))
+                if extra[counter] != "":
+                    print(extra[counter])
+                print("A yellow outline indicates that you will be getting this item over time")
+        counter+=1
+                
+def change_time_object_amounts(section_amounts, turn, time_starting_turns, time_object_limit, time_objects, time_object_section, how_often, activation, window):
+    
+    counter = 0
+    while counter < len(time_starting_turns):
+        
+        if type(time_starting_turns[counter]) == list:
+            if time_starting_turns[counter][0] == True and activation[time_object_section[counter]] == True:
+                x = 0
+                # so that it is accurate when in the main area
+                if time_objects[counter][0] >= 1 and time_objects[counter][0] <= 2:
+                    x = time_objects[counter][0] *4
+                
+                if turn[0] >= time_starting_turns[counter][1] + how_often[counter] and section_amounts[time_objects[counter][0]][time_objects[counter][1]][time_objects[counter][2]] < time_object_limit[counter]:
+                    time_starting_turns[counter][1] += how_often[counter]
+                    section_amounts[time_objects[counter][0]][time_objects[counter][1]][time_objects[counter][2]] += 1
+        counter +=1
 
 
 
